@@ -39,18 +39,16 @@ This function generates a (large) prime.
 static void GeneratePrime(mpuint &p)
 {
   Random(p);
-  p.value[p.length-1] |= 0x8000;
+  p.value[p.length-1] |= 0x80;
   p.value[0] |= 1;
   while (!IsPrime(p))
     p += 2;
 }
 
 
-void GenerateKeys(mpuint &d, mpuint &e, mpuint &n)
+void GenerateKeys(mpuint &d, mpuint &e, mpuint &n, mpuint &p, mpuint &q)
 {
-  mpuint p(d.length/2);
   GeneratePrime(p);
-  mpuint q(d.length/2);
   GeneratePrime(q);
   mpuint pp(p);
   pp -= 1;

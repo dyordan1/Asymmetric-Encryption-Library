@@ -1,52 +1,42 @@
 #include <iostream>
 #include <sstream>
 #include "rsa.h"
+#include "Message.h"
+#include "random.h"
+#include "mpuint.h"
 
 using namespace std;
 
-mpuint* string_to_mpuint(string message)
+//extern "C" {int addFunc(int a, int b);};
+
+mpuint string_to_mpuint(string message)
 {
 	short messageLength = message.length();
-	mpuint* m = new mpuint((messageLength+1)/2);
-	for(int i=0;i < messageLength;i+=2)
+	mpuint m = mpuint(messageLength);
+	for(int i=0;i < messageLength;i++)
 	{
-		char secondChar;
-		if(i+1 == messageLength)
-		{
-			secondChar = 0x00;
-		}
-		else
-		{
-			secondChar = message[i+1];
-		}
-		m->value[i/2] = secondChar + message[i]*0x100;
+		m.value[i] = message[i];
 	}
 	return m;
 }
 
 string mpuint_to_string(mpuint encoded)
 {
-	short padSize = encoded.value[0];
+	unsigned char padSize = encoded.value[0];
 	ostringstream oss;
-	for(short i=padSize;i< encoded.length;i++)
+	for(unsigned char i=padSize;i< encoded.length-1;i++)
 	{
-		short two = encoded.value[i];
-		char char1 = two/0x100;
-		char char2 = two%0x100;
-		oss << char1;
-		if(char2 != 0x00)
-		{
-			oss << char2;
-		}
+		unsigned char theChar = encoded.value[i];
+		oss << theChar;
 	}
 	return oss.str();
 }
 
-mpuint pad_to_size(mpuint* small,short size)
+mpuint pad_to_size(const mpuint &small,unsigned char size)
 {
 	mpuint large = mpuint(size);
-	short smallSize = small->length;
-	short i=size;
+	unsigned char smallSize = small.length;
+	unsigned char i=size;
 	while(i>smallSize)
 	{
 		large.value[size-i] = size-smallSize;
@@ -54,26 +44,38 @@ mpuint pad_to_size(mpuint* small,short size)
 	}
 	for(;i>0;i--)
 	{
-		large.value[size-i] = small->value[smallSize-i];
+		large.value[size-i] = small.value[smallSize-i];
 	}
 	return large;
 }
 
 int main()
 {
-	mpuint d = mpuint(32);
-	mpuint e = mpuint(32);
-	mpuint n = mpuint(32);
+	//Get key size
+	short keySize;
+	cout << "Please choose key size in bits (will be rounded to nearest byte):" << endl;
+	cin >> keySize;
+
+	//clear buffer for getline
+	cin.clear();
+	cin.sync();
+
+	//create all multi-precision integers
+	mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize),p = mpuint(keySize/2),q = mpuint(keySize/2);
+
+	//get string for encryption
 	string originalMessage;
 	cout << "Please enter a string:" << endl;
 	getline(cin,originalMessage);
-	mpuint original = pad_to_size(string_to_mpuint(originalMessage),32);
-	mpuint encrypted = mpuint(32);
-	mpuint decrypted = mpuint(32);
-	GenerateKeys(d,e,n);
-	EncryptDecrypt(encrypted,original,e,n);
-	EncryptDecrypt(decrypted,encrypted,d,n);
-	string decryptedMessage = mpuint_to_string(decrypted);
+	Message theMessage = Message(keySize,originalMessage);
+
+	//Generate keys and do encryptions cycle
+	GenerateKeys(d,e,n,p,q);
+	theMessage.encryptMessage(e,n);
+	theMessage.decryptMessage(d,n,p,q);
+
+	//Get encryption cycle results
+	string decryptedMessage = theMessage.extractMessage();
 	cout << "The RSA encryption/decryption cycle came up with:" << endl << decryptedMessage << endl;
 	if(decryptedMessage == originalMessage)
 	{
