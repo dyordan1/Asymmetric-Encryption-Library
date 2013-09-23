@@ -60,7 +60,10 @@ void GenerateKeys(mpuint &d, mpuint &e, mpuint &n, mpuint &p, mpuint &q)
   n = p;
   n *= q;
   Random(d);
-  d %= pq;
+  mpuint halfPhi(n.length);
+  halfPhi = ((p-1)*(q-1))/2;
+  d %= halfPhi;
+  d += halfPhi;
   mpuint temp(d.length);
   mpuint g(d.length);
   while (true)

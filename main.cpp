@@ -55,6 +55,7 @@ int main()
 	short keySize;
 	cout << "Please choose key size in bits (will be rounded to nearest byte):" << endl;
 	cin >> keySize;
+	keySize /= 8;
 
 	//clear buffer for getline
 	cin.clear();
