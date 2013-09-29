@@ -15,6 +15,6 @@ public:
 	void embedMessage(const string &);
 	string extractMessage();
 	void encryptMessage(const mpuint &,const mpuint &);
-	void decryptMessage(const mpuint &,const mpuint &,const mpuint &,const mpuint &);
+	void decryptMessage(const mpuint &,const mpuint &);
     ~Message();
 };

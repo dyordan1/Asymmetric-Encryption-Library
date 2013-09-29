@@ -23,56 +23,58 @@ void Message::embedMessage(const string &message)
 	if(length != 0)
 		delete [] messageData;
 	unsigned messageSize = message.size();
-	length = messageSize/(chunkSize-1)+1;
+	int bytesInChunk = chunkSize*(BITS_IN_CHUNK/8);
+	length = messageSize/(bytesInChunk-1)+1;
 	messageData = new mpuint[length];
-	for(int i=0;i<length;i++)
+	unsigned char padSize = 0;
+	for(int i=length-1;i>=0;i--)
 	{
 		messageData[i].setSize(chunkSize);
-		for(int j=0;j<chunkSize-1;j++)
+		messageData[i] = 0;
+		for(int j=bytesInChunk-2;j>=0;j--)
 		{
-			if(i*(chunkSize-1)+j >= messageSize)
+			unsigned short messageIndex = (length-1-i)*(bytesInChunk-1)+bytesInChunk-2-j;
+			messageData[i].value[j/(BITS_IN_CHUNK/8)] <<= 8;
+			unsigned char theChar;
+			if(messageIndex >= messageSize)
 			{
-				unsigned char padSize = chunkSize-j-1;
-				for(int k=j;k<chunkSize-1;k++)
-				{
-					messageData[i].value[k] = padSize;
-				}
-				break;
+				if(padSize == 0)
+					padSize = length*(bytesInChunk-1)-messageIndex;
+				theChar = padSize;
 			}
-			messageData[i].value[j] = message[i*(chunkSize-1)+j];
+			else
+			{
+				theChar = message[messageIndex];
+			}
+			messageData[i].value[j/(BITS_IN_CHUNK/8)] |= theChar;
 		}
-		messageData[i].value[chunkSize-1] = 0;
 	}
 }
 
 string Message::extractMessage()
 {
 	ostringstream extractedStream;
-	for(int i=0;i < length-1;i++)
+	int bytesInChunk = chunkSize*(BITS_IN_CHUNK/8);
+	for(int i=length-1;i >= 0;i--)
 	{
-		for(int j=0;j<chunkSize-1;j++)
+		for(int j=chunkSize-1;j >= 0;j--)
 		{
-			extractedStream << messageData[i].value[j];
-		}
-	}
-	for(int j=0;j<chunkSize-1;j++)
-	{
-		unsigned char theChar = messageData[length-1].value[j];
-		if(theChar == chunkSize-j-1)
-		{
-			bool isPad = true;
-			for(int k=j;k<chunkSize-1;k++)
+			CHUNK_DATA_TYPE chunk = messageData[i].value[j];
+			unsigned short currentByte = BITS_IN_CHUNK/8;
+			while(currentByte--)
 			{
-				if(messageData[length-1].value[k] != chunkSize-j-1)
+				unsigned char theChar = chunk >> currentByte*8;
+				if(theChar == 0 && j==chunkSize-1)
+					continue;
+				if(i==0 && (j*(BITS_IN_CHUNK/8)+currentByte+1)%0x100 == theChar)
 				{
-					isPad = false;
+					goto afterPadding;
 				}
+				extractedStream << theChar;
 			}
-			if(isPad)
-				break;
 		}
-		extractedStream << theChar;
 	}
+	afterPadding:
 	return extractedStream.str();
 }
 
@@ -86,10 +88,8 @@ void Message::encryptMessage(const mpuint &e,const mpuint &n)
 	}
 }
 
-void Message::decryptMessage(const mpuint &d,const mpuint &n,const mpuint &p,const mpuint &q)
+void Message::decryptMessage(const mpuint &d,const mpuint &n)
 {
-	mpuint phi = (p-1)*(q-1);
-	mpuint pow = d%phi;
 	for(int i=0;i<length;i++)
 	{
 		mpuint result = mpuint(messageData[i].length);

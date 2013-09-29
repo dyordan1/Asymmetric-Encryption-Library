@@ -16,10 +16,19 @@ static int RandomKey(void)
 
 void Random(mpuint &x)
 {
-  printf("Please type %d random characters\r\n", x.length);
+  printf("Please type %d random characters\r\n", x.length*(BITS_IN_CHUNK/8));
   while (_kbhit() != 0)
     RandomKey();
   for (unsigned i = 0; i < x.length; i++)
-    x.value[i] = RandomKey();
+  {
+	unsigned short bytes_left = (BITS_IN_CHUNK/8);
+	  CHUNK_DATA_TYPE chunk = RandomKey();
+	  while(--bytes_left)
+	  {
+		  chunk <<= 8;
+		  chunk |= RandomKey();
+	  }
+	x.value[i] = chunk;
+  }
   printf("\r\nThank you\r\n");
 }

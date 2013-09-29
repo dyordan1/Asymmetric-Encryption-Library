@@ -4,7 +4,7 @@
 #include "mpuint.h"
 #include <string>
 
-void GenerateKeys(mpuint &d, mpuint &e, mpuint &n, mpuint &p, mpuint &q);
+void GenerateKeys(mpuint &d, mpuint &e, mpuint &n);
 
 inline void EncryptDecrypt(mpuint &result, const mpuint &source,
   const mpuint &e, const mpuint &n)

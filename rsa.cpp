@@ -19,7 +19,7 @@ static bool IsPrime(const mpuint &p)
     mpuint x(p.length);
     {
       for (unsigned i = 0; i < x.length; i++)
-        x.value[i] = rand() << 8 | rand();
+        x.value[i] = rand();
     }
     x %= p;
     if (x != 0)
@@ -39,15 +39,17 @@ This function generates a (large) prime.
 static void GeneratePrime(mpuint &p)
 {
   Random(p);
-  p.value[p.length-1] |= 0x80;
+  p.value[p.length-1] |= MSB;
   p.value[0] |= 1;
   while (!IsPrime(p))
     p += 2;
 }
 
 
-void GenerateKeys(mpuint &d, mpuint &e, mpuint &n, mpuint &p, mpuint &q)
+void GenerateKeys(mpuint &d, mpuint &e, mpuint &n)
 {
+	mpuint p(d.length/2);
+	mpuint q(d.length/2);
   GeneratePrime(p);
   GeneratePrime(q);
   mpuint pp(p);

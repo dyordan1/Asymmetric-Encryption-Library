@@ -9,53 +9,13 @@ using namespace std;
 
 //extern "C" {int addFunc(int a, int b);};
 
-mpuint string_to_mpuint(string message)
-{
-	short messageLength = message.length();
-	mpuint m = mpuint(messageLength);
-	for(int i=0;i < messageLength;i++)
-	{
-		m.value[i] = message[i];
-	}
-	return m;
-}
-
-string mpuint_to_string(mpuint encoded)
-{
-	unsigned char padSize = encoded.value[0];
-	ostringstream oss;
-	for(unsigned char i=padSize;i< encoded.length-1;i++)
-	{
-		unsigned char theChar = encoded.value[i];
-		oss << theChar;
-	}
-	return oss.str();
-}
-
-mpuint pad_to_size(const mpuint &small,unsigned char size)
-{
-	mpuint large = mpuint(size);
-	unsigned char smallSize = small.length;
-	unsigned char i=size;
-	while(i>smallSize)
-	{
-		large.value[size-i] = size-smallSize;
-		i--;
-	}
-	for(;i>0;i--)
-	{
-		large.value[size-i] = small.value[smallSize-i];
-	}
-	return large;
-}
-
 int main()
 {
 	//Get key size
 	short keySize;
-	cout << "Please choose key size in bits (will be rounded to nearest byte):" << endl;
+	cout << "Please choose key size in bits (will be rounded to nearest chunk):" << endl;
 	cin >> keySize;
-	keySize /= 8;
+	keySize /= BITS_IN_CHUNK;
 
 	//clear buffer for getline
 	cin.clear();
@@ -64,6 +24,20 @@ int main()
 	//create all multi-precision integers
 	mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize),p = mpuint(keySize/2),q = mpuint(keySize/2);
 
+	/*
+	for(int i=0;i<1000;i++)
+	{
+		Random(p);
+		Random(q);
+		p %= q;
+		n=p*q+q-p;
+		e=n/q;
+		d=n%q;
+		if(e != p || d != q-p)
+			cout << "\t\t\tWRONG" << endl << "\t\t\t" << n << endl << "\t\t\t" << p << endl << "\t\t\t" << q << endl << "\t\t\t" << e << endl << "\t\t\t" << d << endl;
+	}
+	*/
+
 	//get string for encryption
 	string originalMessage;
 	cout << "Please enter a string:" << endl;
@@ -71,9 +45,9 @@ int main()
 	Message theMessage = Message(keySize,originalMessage);
 
 	//Generate keys and do encryptions cycle
-	GenerateKeys(d,e,n,p,q);
+	GenerateKeys(d,e,n);
 	theMessage.encryptMessage(e,n);
-	theMessage.decryptMessage(d,n,p,q);
+	theMessage.decryptMessage(d,n);
 
 	//Get encryption cycle results
 	string decryptedMessage = theMessage.extractMessage();
