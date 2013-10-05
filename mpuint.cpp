@@ -12,7 +12,7 @@ std::ostream& operator<<(std::ostream& out,mpuint h)
 	out << "0x";
 	for(int i= h.length-1;i>=0;i--)
 	{
-		out << std::setw(2) << std::setfill('0') << std::hex << (int)h.value[i];
+		out << std::setw(BITS_IN_CHUNK/4) << std::setfill('0') << std::hex << (int)h.value[i];
 	}
 	return out;
 }
@@ -69,6 +69,9 @@ void mpuint::operator = (CHUNK_DATA_TYPE n)
 
 void mpuint::operator += (const mpuint &n)
 {
+#ifdef USE_ASSEMBLY_IMPLEMENTATIONS
+	mpuint_add_asm(this->value,n.value,length,n.length);
+#else
 	unsigned i;
 	DCHUNK_DATA_TYPE carry = 0;
 	for (i = 0; i < length; i++)
@@ -84,6 +87,7 @@ void mpuint::operator += (const mpuint &n)
 		if (n.value[i] != 0)
 			numeric_overflow();
 	}
+#endif
 }
 
 void mpuint::operator += (CHUNK_DATA_TYPE n)
@@ -103,6 +107,9 @@ void mpuint::operator += (CHUNK_DATA_TYPE n)
 
 void mpuint::operator -= (const mpuint &n)
 {
+#ifndef USE_ASSEMBLY_IMPLEMENTATIONS
+	mpuint_sub_asm(this->value,n.value,length,n.length);
+#else
 	unsigned i;
 	DCHUNK_DATA_TYPE borrow = 0;
 	for (i = 0; i < length; i++)
@@ -118,6 +125,7 @@ void mpuint::operator -= (const mpuint &n)
 		if (n.value[i] != 0)
 			numeric_overflow();
 	}
+#endif
 }
 
 void mpuint::operator -= (CHUNK_DATA_TYPE n)

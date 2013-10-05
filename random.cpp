@@ -14,6 +14,21 @@ static int RandomKey(void)
   return c + n & 0xFF;
 }
 
+void PseudoRandom(mpuint &x)
+{
+  for (unsigned i = 0; i < x.length; i++)
+  {
+	unsigned short bytes_left = (BITS_IN_CHUNK/8);
+	  CHUNK_DATA_TYPE chunk = rand();
+	  while(--bytes_left)
+	  {
+		  chunk <<= 8;
+		  chunk |= rand();
+	  }
+	x.value[i] = chunk;
+  }
+}
+
 void Random(mpuint &x)
 {
   printf("Please type %d random characters\r\n", x.length*(BITS_IN_CHUNK/8));

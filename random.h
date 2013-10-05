@@ -3,6 +3,7 @@
 
 #include "mpuint.h"
 
+void PseudoRandom(mpuint &x);
 void Random(mpuint &x);
 
 #endif

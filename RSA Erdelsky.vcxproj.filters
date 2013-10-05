@@ -52,7 +52,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="math.asm">
+    <MASM Include="mpuint_math.asm">
       <Filter>Source Files</Filter>
     </MASM>
   </ItemGroup>

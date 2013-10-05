@@ -16,7 +16,7 @@ This function will fail in undefined ways if either x or y is zero.
 void EuclideanAlgorithm(const mpuint &x, const mpuint &y, mpuint &a,
   mpuint &b, mpuint &g)
 {
-  unsigned length = x.length;
+  size_t length = x.length;
   if (y.length > length)
     length = y.length;
   if (x <= y)

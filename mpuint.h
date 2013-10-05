@@ -6,6 +6,7 @@
 #define BITS_IN_CHUNK 32
 
 #if BITS_IN_CHUNK==32
+#define USE_ASSEMBLY_IMPLEMENTATIONS
 #define CHUNK_DATA_TYPE unsigned __int32
 #define DCHUNK_DATA_TYPE unsigned __int64
 #define MSB 0x80000000
@@ -19,7 +20,7 @@
 #define MSB 0x80
 #endif
 
-extern void numeric_overflow(void);
+extern "C" void numeric_overflow(void);
 
 class mpuint
 {
@@ -80,5 +81,13 @@ mpuint operator /(const mpuint &, const mpuint &);
 mpuint operator /(const mpuint &, CHUNK_DATA_TYPE);
 mpuint operator %(const mpuint &, const mpuint &);
 mpuint operator %(const mpuint &, CHUNK_DATA_TYPE);
+
+#ifdef USE_ASSEMBLY_IMPLEMENTATIONS
+extern "C"
+{
+	void mpuint_add_asm(unsigned __int32* a, unsigned __int32* b, size_t sizeA, size_t sizeB);
+	void mpuint_sub_asm(unsigned __int32* a, unsigned __int32* b, size_t sizeA, size_t sizeB);
+};
+#endif
 
 #endif
