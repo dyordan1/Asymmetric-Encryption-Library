@@ -28,10 +28,10 @@ int main()
 	//int numTests = 100000;
 	//clock_t averageClocks = 0;
 	//
-	//for(int j=0;j<numTrials;j++)
+	//for(int j=0;j<numTrials;++j)
 	//{
 	//	clock_t tStart = clock();
-	//	for(int i=0;i<numTests;i++)
+	//	for(int i=0;i<numTests;++i)
 	//	{
 	//		PseudoRandom(p);
 	//		PseudoRandom(q);

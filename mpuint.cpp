@@ -36,7 +36,7 @@ mpuint::mpuint(const mpuint &n)
 	length = n.length;
 	value = new CHUNK_DATA_TYPE[length]; 
 	unsigned i; 
-	for (i = 0; i < length; i++) 
+	for (i = 0; i < length; ++i) 
 		value[i] = n.value[i]; 
 } 
 
@@ -48,11 +48,11 @@ mpuint::~mpuint()
 void mpuint::operator = (const mpuint &n)
 {
 	unsigned i;
-	for (i = 0; i < length && i < n.length; i++)
+	for (i = 0; i < length && i < n.length; ++i)
 		value[i] = n.value[i];
-	for (; i < length; i++)
-		value[i] = 0;
-	for (; i < n.length; i++)
+	if(i < length)
+		memset (&value[i],0,(length-i)*(BITS_IN_CHUNK/8));
+	for (; i < n.length; ++i)
 	{
 		if (n.value[i] != 0)
 			numeric_overflow();
@@ -62,9 +62,8 @@ void mpuint::operator = (const mpuint &n)
 void mpuint::operator = (CHUNK_DATA_TYPE n)
 {
 	value[0] = n;
-	unsigned i;
-	for (i = 1; i < length; i++)
-		value[i] = 0;
+	if(1 < length)
+		memset (&value[1],0,(length-1)*(BITS_IN_CHUNK/8));
 }
 
 void mpuint::operator += (const mpuint &n)
@@ -74,7 +73,7 @@ void mpuint::operator += (const mpuint &n)
 #else
 	unsigned i;
 	DCHUNK_DATA_TYPE carry = 0;
-	for (i = 0; i < length; i++)
+	for (i = 0; i < length; ++i)
 	{
 		DCHUNK_DATA_TYPE sum = carry + value[i] + (i < n.length ? n.value[i] : 0);
 		value[i] = sum;
@@ -82,7 +81,7 @@ void mpuint::operator += (const mpuint &n)
 	}
 	if (carry != 0)
 		numeric_overflow();
-	for (; i < n.length; i++)
+	for (; i < n.length; ++i)
 	{
 		if (n.value[i] != 0)
 			numeric_overflow();
@@ -96,7 +95,7 @@ void mpuint::operator += (CHUNK_DATA_TYPE n)
 	if (value[0] < n)
 	{
 		unsigned i;
-		for (i = 1; i < length; i++)
+		for (i = 1; i < length; ++i)
 		{
 			if (++value[i] != 0)
 			return;
@@ -112,7 +111,7 @@ void mpuint::operator -= (const mpuint &n)
 #else
 	unsigned i;
 	DCHUNK_DATA_TYPE borrow = 0;
-	for (i = 0; i < length; i++)
+	for (i = 0; i < length; ++i)
 	{
 		DCHUNK_DATA_TYPE subtrahend = (i < n.length ? n.value[i] : 0) + borrow;
 		borrow = subtrahend > value[i];
@@ -120,7 +119,7 @@ void mpuint::operator -= (const mpuint &n)
 	}
 	if (borrow != 0)
 		numeric_overflow();
-	for (; i < n.length; i++)
+	for (; i < n.length; ++i)
 	{
 		if (n.value[i] != 0)
 			numeric_overflow();
@@ -135,7 +134,7 @@ void mpuint::operator -= (CHUNK_DATA_TYPE n)
 	else
 	{
 		value[0] -= n;
-		for (unsigned i = 1; i < length; i++)
+		for (unsigned i = 1; i < length; ++i)
 		{
 			if (--value[i] != 0xFF)
 			return;
@@ -148,15 +147,15 @@ void mpuint::operator *= (const mpuint &n)
 {
 	unsigned i;
 	DCHUNK_DATA_TYPE *multiplier = new DCHUNK_DATA_TYPE[length];
-	for (i = 0; i < length; i++)
+	for (i = 0; i < length; ++i)
 	{
 		multiplier[i] = value[i];
 		value[i] = 0;
 	}
-	for (i = 0; i < length; i++)
+	for (i = 0; i < length; ++i)
 	{
 		unsigned j;
-		for (j = 0; j < n.length; j++)
+		for (j = 0; j < n.length; ++j)
 		{
 			DCHUNK_DATA_TYPE product = multiplier[i] * n.value[j];
 			unsigned k = i + j;
@@ -167,7 +166,7 @@ void mpuint::operator *= (const mpuint &n)
 				product += value[k];
 				value[k] = product;
 				product >>= BITS_IN_CHUNK;
-				k++;
+				++k;
 			}
 		}
 	}
@@ -178,7 +177,7 @@ void mpuint::operator *= (CHUNK_DATA_TYPE n)
 {
 	unsigned i;
 	DCHUNK_DATA_TYPE product = 0;
-	for (i = 0; i < length; i++)
+	for (i = 0; i < length; ++i)
 	{
 		product += n * value[i];
 		value[i] = product;
@@ -259,7 +258,7 @@ int mpuint::Compare(CHUNK_DATA_TYPE n) const
 bool mpuint::IsZero(void) const
 {
 	unsigned i;
-	for (i = 0; i < length; i++)
+	for (i = 0; i < length; ++i)
 	{
 		if (value[i] != 0)
 			return false;
@@ -276,7 +275,7 @@ CHUNK_DATA_TYPE *mpuint::edit(CHUNK_DATA_TYPE *s) const
 	while (!n.IsZero());
 	s[i] = 0; 
 	unsigned j; 
-	for (j = 0; --i > j; j++) 
+	for (j = 0; --i > j; ++j) 
 	{ 
 		CHUNK_DATA_TYPE c = s[i]; 
 		s[i] = s[j];
@@ -290,7 +289,7 @@ bool mpuint::scan(const CHUNK_DATA_TYPE *&s)
 	const CHUNK_DATA_TYPE *t = s; 
 	bool found = false; 
 	while (*t == ' ' || *t == '\t') 
-		t++;
+		++t;
 	*this = 0; 
 	while ('0' <= *t && *t <= '9') 
 	{ 
@@ -305,7 +304,7 @@ bool mpuint::scan(const CHUNK_DATA_TYPE *&s)
 void mpuint::shift(unsigned bit)
 {
 	CHUNK_DATA_TYPE rolOver = 0;
-	for (unsigned i = 0; i < length; i++)
+	for (unsigned i = 0; i < length; ++i)
 	{ 
 		DCHUNK_DATA_TYPE x = ((DCHUNK_DATA_TYPE)value[i] << bit) | rolOver; 
 		value[i] = x; 
@@ -379,7 +378,7 @@ void mpuint::Power(const mpuint &base, const mpuint &exponent,
 			binPowCopy %= modulus;
 			binPow = binPowCopy;
 		} while (bit != 0);
-		i++;
+		++i;
 	}
 	result = r;
 }
@@ -388,7 +387,7 @@ void mpuint::Power(const mpuint &base, const mpuint &exponent,
 void mpuint::dump() const
 {
 	unsigned i;
-	for (i = 0; i < length; i++)
+	for (i = 0; i < length; ++i)
 		printf(" %x", value[i]);
 		putchar('\n');
 }

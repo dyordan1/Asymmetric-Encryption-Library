@@ -6,7 +6,7 @@ static int RandomKey(void)
 {
   int n = 0;
   while (_kbhit() == 0)
-    n++;
+    ++n;
   int c = _getch();
   if (c == 0)
     c = _getch();
@@ -16,7 +16,7 @@ static int RandomKey(void)
 
 void PseudoRandom(mpuint &x)
 {
-  for (unsigned i = 0; i < x.length; i++)
+  for (unsigned i = 0; i < x.length; ++i)
   {
 	unsigned short bytes_left = (BITS_IN_CHUNK/8);
 	  CHUNK_DATA_TYPE chunk = rand();
@@ -34,7 +34,7 @@ void Random(mpuint &x)
   printf("Please type %d random characters\r\n", x.length*(BITS_IN_CHUNK/8));
   while (_kbhit() != 0)
     RandomKey();
-  for (unsigned i = 0; i < x.length; i++)
+  for (unsigned i = 0; i < x.length; ++i)
   {
 	unsigned short bytes_left = (BITS_IN_CHUNK/8);
 	  CHUNK_DATA_TYPE chunk = RandomKey();

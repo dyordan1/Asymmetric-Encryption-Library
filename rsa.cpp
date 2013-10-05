@@ -18,7 +18,7 @@ static bool IsPrime(const mpuint &p)
     mpuint r(p.length);
     mpuint x(p.length);
     {
-      for (unsigned i = 0; i < x.length; i++)
+      for (unsigned i = 0; i < x.length; ++i)
         x.value[i] = rand();
     }
     x %= p;

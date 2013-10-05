@@ -80,7 +80,7 @@ string Message::extractMessage()
 
 void Message::encryptMessage(const mpuint &e,const mpuint &n)
 {
-	for(unsigned i=0;i<length;i++)
+	for(unsigned i=0;i<length;++i)
 	{
 		mpuint result = mpuint(messageData[i].length);
 		mpuint::Power(messageData[i],e,n,result);
@@ -90,7 +90,7 @@ void Message::encryptMessage(const mpuint &e,const mpuint &n)
 
 void Message::decryptMessage(const mpuint &d,const mpuint &n)
 {
-	for(unsigned i=0;i<length;i++)
+	for(unsigned i=0;i<length;++i)
 	{
 		mpuint result = mpuint(messageData[i].length);
 		mpuint::Power(messageData[i],d,n,result);
