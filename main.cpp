@@ -14,8 +14,8 @@ int main()
 	unsigned short keySize;
 	cout << "Please choose key size in bits (will be rounded to nearest chunk):" << endl;
 	cin >> keySize;
-	keySize /= BITS_IN_CHUNK*2;
-	keySize *= 2;
+	keySize /= BITS_IN_CHUNK*4;
+	keySize *= 4;
 
 	//clear buffer for getline
 	cin.clear();

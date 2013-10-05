@@ -83,13 +83,15 @@ mpuint_sub_asm PROC
 			MOV RAX, [RDX+4*RBX]
 			CMP R10B, 1
 			JNE noSubBorrow
-				DEC QWORD PTR [RCX+4*RBX]
-				JNZ noSecBorrow
+				CMP QWORD PTR [RCX+4*RBX],0
+				JNE noSecBorrow
 					CMP RBX, R8
 					JE bailOutWithError
 					MOV R10B, 1
+					DEC QWORD PTR [RCX+4*RBX]
 					JMP noSubBorrow
 				noSecBorrow:
+				DEC QWORD PTR [RCX+4*RBX]
 				MOV R10B, 0
 			noSubBorrow:
 			CMP RBX, R8

@@ -107,7 +107,7 @@ void mpuint::operator += (CHUNK_DATA_TYPE n)
 
 void mpuint::operator -= (const mpuint &n)
 {
-#ifndef USE_ASSEMBLY_IMPLEMENTATIONS
+#ifdef USE_ASSEMBLY_IMPLEMENTATIONS
 	mpuint_sub_asm(this->value,n.value,length,n.length);
 #else
 	unsigned i;
