@@ -24,42 +24,42 @@ int main()
 	//create all multi-precision integers
 	mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize),p = mpuint(keySize/2),q = mpuint(keySize/2);
 
-	//int numTrials = 1000;
-	//int numTests = 100000;
-	//clock_t averageClocks = 0;
-	//
-	//for(int j=0;j<numTrials;++j)
-	//{
-	//	clock_t tStart = clock();
-	//	for(int i=0;i<numTests;++i)
-	//	{
-	//		PseudoRandom(p);
-	//		PseudoRandom(q);
-	//		/*n=p;
-	//		n += q;
-	//		e=n-q;
-	//		d=n-p;
-	//		if(e != p || d != q)
-	//		{
-	//			cout << "WRONG" << endl << "\t" << n << endl << "\t" << p << endl << "\t" << q << endl << "\t" << e << endl << "\t" << d << endl;
-	//			return 1;
-	//		}*/
-	//		p %= q;
-	//		n=p*q+q-p;
-	//		e=n/q;
-	//		d=n%q;
-	//		if(e != p || d != q-p)
-	//		{
-	//			cout << "WRONG" << endl << "\t" << n << endl << "\t" << p << endl << "\t" << q << endl << "\t" << e << endl << "\t" << d << endl;
-	//			return 1;
-	//		}
-	//	}
-	//	averageClocks += clock() - tStart;
-	//}
+	int numTrials = 1000;
+	int numTests = 1000;
+	clock_t averageClocks = 0;
+	
+	for(int j=0;j<numTrials;++j)
+	{
+		clock_t tStart = clock();
+		for(int i=0;i<numTests;++i)
+		{
+			PseudoRandom(p);
+			PseudoRandom(q);
+			/*n=p;
+			n += q;
+			e=n-q;
+			d=n-p;
+			if(e != p || d != q)
+			{
+				cout << "WRONG" << endl << "\t" << n << endl << "\t" << p << endl << "\t" << q << endl << "\t" << e << endl << "\t" << d << endl;
+				return 1;
+			}*/
+			p %= q;
+			n=p*q+q-p;
+			e=n/q;
+			d=n%q;
+			if(e != p || d != q-p)
+			{
+				cout << "WRONG" << endl << "\t" << n << endl << "\t" << p << endl << "\t" << q << endl << "\t" << e << endl << "\t" << d << endl;
+				return 1;
+			}
+		}
+		averageClocks += clock() - tStart;
+	}
 
-	//cout << "Operation took on average " << (double)averageClocks/numTrials << " clock cycles";
+	cout << "Operation took on average " << (double)averageClocks/numTrials << " clock cycles";
 
-	//return 0;
+	return 0;
 
 	//get string for encryption
 	string originalMessage;

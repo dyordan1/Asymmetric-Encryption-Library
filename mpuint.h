@@ -9,15 +9,15 @@
 #define USE_ASSEMBLY_IMPLEMENTATIONS
 #define CHUNK_DATA_TYPE unsigned __int32
 #define DCHUNK_DATA_TYPE unsigned __int64
-#define MSB 0x80000000
+#define MSB 0xC0000000
 #elif BITS_IN_CHUNK==16
 #define CHUNK_DATA_TYPE unsigned __int16
 #define DCHUNK_DATA_TYPE unsigned __int32
-#define MSB 0x8000
+#define MSB 0xC000
 #elif BITS_IN_CHUNK==8
 #define CHUNK_DATA_TYPE unsigned __int8
 #define DCHUNK_DATA_TYPE unsigned __int16
-#define MSB 0x80
+#define MSB 0xC0
 #endif
 
 extern "C" void numeric_overflow(void);

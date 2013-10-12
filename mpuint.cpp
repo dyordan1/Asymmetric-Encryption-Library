@@ -320,23 +320,42 @@ void mpuint::Divide(const mpuint &dividend, const mpuint &divisor, mpuint &quoti
 { 
 	if (divisor.IsZero())
 		numeric_overflow(); 
-	remainder = 0;
-	quotient = 0;
-	unsigned i = dividend.length;
-	while (i-- > 0)
+	mpuint container(divisor.length+1);
+	//AND with 0
+	container = 0;
+	for(int i=0;i<divisor.length; ++i)
 	{
-		CHUNK_DATA_TYPE bit = 1 << (BITS_IN_CHUNK-1);
-		do
-		{
-			remainder.shift(1);
-			remainder.value[0] |= ((dividend.value[i] & bit)!= 0);
-			if(remainder >= divisor)
-			{
-				remainder = remainder-divisor;
-				quotient.value[i] |= bit;
-			}
-		} while(bit >>= 1);
+		container.shift(BITS_IN_CHUNK);
+		container += dividend.value[dividend.length-1-i];
 	}
+	quotient = 0;
+	CHUNK_DATA_TYPE topChunk = divisor.value[divisor.length-1]+1;
+	mpuint temp(container.length);
+	for(int i=0;i<dividend.length-divisor.length;++i)
+	{
+		if(container > divisor)
+		{
+			container -= divisor;
+			quotient += 1;
+		}
+		quotient.shift(BITS_IN_CHUNK);
+		container.shift(BITS_IN_CHUNK);
+		container += dividend.value[dividend.length-divisor.length-1-i];
+		DCHUNK_DATA_TYPE topTwo = container.value[container.length-1];
+		topTwo <<= BITS_IN_CHUNK;
+		topTwo += container.value[container.length-2];
+		CHUNK_DATA_TYPE result = topTwo/topChunk;
+		quotient += result;
+		temp = divisor;
+		temp *= result;
+		container -= temp;
+	}
+	if(container > divisor)
+	{
+		container -= divisor;
+		quotient += 1;
+	}
+	remainder = container;
 } 
 
 void mpuint::operator /= (const mpuint &n) 
