@@ -314,12 +314,40 @@ void mpuint::shift(unsigned bit)
 		numeric_overflow();
 } 
 
-
 void mpuint::Divide(const mpuint &dividend, const mpuint &divisor, mpuint &quotient,
   mpuint &remainder)
 { 
-	if (divisor.IsZero())
-		numeric_overflow(); 
+        if (divisor.IsZero())
+                numeric_overflow();
+		if ((divisor.value[divisor.length-1]) != 0xff && (dividend.value[dividend.length-1] & MSB<<1))
+		{
+			SmartDivide(dividend,divisor,quotient,remainder);
+			q = quotient;
+			r = remainder;
+		}
+        remainder = 0;
+        quotient = 0;
+        unsigned i = dividend.length;
+        while (i-- > 0)
+        {
+                CHUNK_DATA_TYPE bit = 1 << (BITS_IN_CHUNK-1);
+                do
+                {
+                        remainder.shift(1);
+                        remainder.value[0] |= ((dividend.value[i] & bit)!= 0);
+                        if(remainder >= divisor)
+                        {
+                                remainder = remainder-divisor;
+                                quotient.value[i] |= bit;
+                        }
+                } while(bit >>= 1);
+        }
+} 
+
+
+void mpuint::SmartDivide(const mpuint &dividend, const mpuint &divisor, mpuint &quotient,
+  mpuint &remainder)
+{
 	mpuint container(divisor.length+1);
 	//AND with 0
 	container = 0;

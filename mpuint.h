@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#define BITS_IN_CHUNK 32
+#define BITS_IN_CHUNK 8
 
 #if BITS_IN_CHUNK==32
 #define USE_ASSEMBLY_IMPLEMENTATIONS
@@ -51,6 +51,7 @@ class mpuint
     void operator %= (const mpuint &);
     void operator %= (CHUNK_DATA_TYPE);
     static void Divide(const mpuint &, const mpuint &, mpuint &, mpuint &);
+    static void SmartDivide(const mpuint &, const mpuint &, mpuint &, mpuint &);
     CHUNK_DATA_TYPE *edit(CHUNK_DATA_TYPE *) const;
     bool scan(const CHUNK_DATA_TYPE *&);
     void dump() const;
