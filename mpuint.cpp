@@ -322,8 +322,7 @@ void mpuint::Divide(const mpuint &dividend, const mpuint &divisor, mpuint &quoti
 		if ((divisor.value[divisor.length-1]) != 0xff && (dividend.value[dividend.length-1] & MSB<<1))
 		{
 			SmartDivide(dividend,divisor,quotient,remainder);
-			q = quotient;
-			r = remainder;
+			return;
 		}
         remainder = 0;
         quotient = 0;
