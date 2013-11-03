@@ -23,6 +23,21 @@ mpuint::mpuint(unsigned len)
 	value = new CHUNK_DATA_TYPE[len]; 
 }
 
+mpuint::mpuint(std::string hexStr)
+{
+	length = hexStr.size()/(BITS_IN_CHUNK/4);
+	value = new CHUNK_DATA_TYPE[length];
+	for(int i=length-1;i>=0;--i)
+	{
+		char chunk[BITS_IN_CHUNK/4];
+		for(int j=0;j<BITS_IN_CHUNK/8;j++)
+		{
+			sprintf(&chunk[2*j],"%c%c",hexStr[i*(BITS_IN_CHUNK/4)+2*j],hexStr[i*(BITS_IN_CHUNK/4)+2*j+1]);
+		}
+		sscanf_s(chunk, "%x", &value[length-i-1]);
+	}
+}
+
 void mpuint::setSize(unsigned len)
 {
 	if(length != 0)
@@ -319,7 +334,7 @@ void mpuint::Divide(const mpuint &dividend, const mpuint &divisor, mpuint &quoti
 { 
         if (divisor.IsZero())
                 numeric_overflow();
-		if ((divisor.value[divisor.length-1]) != 0xff && (dividend.value[dividend.length-1] & MSB<<1))
+		if ((divisor.value[divisor.length-1]) != 0xff && (divisor.value[divisor.length-1] & MSB<<1))
 		{
 			SmartDivide(dividend,divisor,quotient,remainder);
 			return;

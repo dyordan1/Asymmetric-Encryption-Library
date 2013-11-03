@@ -35,6 +35,7 @@ class mpuint
     unsigned length;
     mpuint(unsigned);
     mpuint(const mpuint &);
+    mpuint(std::string hexStr);
 	mpuint() {length=0;};
 	void setSize(unsigned);
     ~mpuint();
