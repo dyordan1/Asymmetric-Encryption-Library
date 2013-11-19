@@ -29,7 +29,7 @@ mpuint::mpuint(std::string hexStr)
 	value = new CHUNK_DATA_TYPE[length];
 	for(int i=length-1;i>=0;--i)
 	{
-		char chunk[BITS_IN_CHUNK/4];
+		char chunk[BITS_IN_CHUNK/4+1];
 		for(int j=0;j<BITS_IN_CHUNK/8;j++)
 		{
 			sprintf(&chunk[2*j],"%c%c",hexStr[i*(BITS_IN_CHUNK/4)+2*j],hexStr[i*(BITS_IN_CHUNK/4)+2*j+1]);
@@ -194,7 +194,7 @@ void mpuint::operator *= (CHUNK_DATA_TYPE n)
 	DCHUNK_DATA_TYPE product = 0;
 	for (i = 0; i < length; ++i)
 	{
-		product += n * value[i];
+		product += n * (DCHUNK_DATA_TYPE)value[i];
 		value[i] = product;
 		product >>= BITS_IN_CHUNK;
 	}
@@ -334,7 +334,7 @@ void mpuint::Divide(const mpuint &dividend, const mpuint &divisor, mpuint &quoti
 { 
         if (divisor.IsZero())
                 numeric_overflow();
-		if ((divisor.value[divisor.length-1]) != 0xff && (divisor.value[divisor.length-1] & MSB<<1))
+		if (divisor.value[divisor.length-1] != MAX_CHUNK  && (divisor.value[divisor.length-1] & MSB<<1))
 		{
 			SmartDivide(dividend,divisor,quotient,remainder);
 			return;
@@ -362,7 +362,7 @@ void mpuint::Divide(const mpuint &dividend, const mpuint &divisor, mpuint &quoti
 void mpuint::SmartDivide(const mpuint &dividend, const mpuint &divisor, mpuint &quotient,
   mpuint &remainder)
 {
-	mpuint container(divisor.length+1);
+	mpuint container(divisor.length+2);
 	//AND with 0
 	container = 0;
 	for(int i=0;i<divisor.length; ++i)
@@ -375,7 +375,7 @@ void mpuint::SmartDivide(const mpuint &dividend, const mpuint &divisor, mpuint &
 	mpuint temp(container.length);
 	for(int i=0;i<dividend.length-divisor.length;++i)
 	{
-		if(container > divisor)
+		while(container > divisor)
 		{
 			container -= divisor;
 			quotient += 1;
@@ -383,16 +383,16 @@ void mpuint::SmartDivide(const mpuint &dividend, const mpuint &divisor, mpuint &
 		quotient.shift(BITS_IN_CHUNK);
 		container.shift(BITS_IN_CHUNK);
 		container += dividend.value[dividend.length-divisor.length-1-i];
-		DCHUNK_DATA_TYPE topTwo = container.value[container.length-1];
+		DCHUNK_DATA_TYPE topTwo = container.value[container.length-2];
 		topTwo <<= BITS_IN_CHUNK;
-		topTwo += container.value[container.length-2];
+		topTwo += container.value[container.length-3];
 		CHUNK_DATA_TYPE result = topTwo/topChunk;
 		quotient += result;
 		temp = divisor;
 		temp *= result;
 		container -= temp;
 	}
-	if(container > divisor)
+	while(container > divisor)
 	{
 		container -= divisor;
 		quotient += 1;

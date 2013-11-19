@@ -3,21 +3,24 @@
 
 #include <iostream>
 
-#define BITS_IN_CHUNK 8
+#define BITS_IN_CHUNK 32
 
 #if BITS_IN_CHUNK==32
 #define USE_ASSEMBLY_IMPLEMENTATIONS
 #define CHUNK_DATA_TYPE unsigned __int32
 #define DCHUNK_DATA_TYPE unsigned __int64
 #define MSB 0xC0000000
+#define MAX_CHUNK 0xFFFFFFFF
 #elif BITS_IN_CHUNK==16
 #define CHUNK_DATA_TYPE unsigned __int16
 #define DCHUNK_DATA_TYPE unsigned __int32
 #define MSB 0xC000
+#define MAX_CHUNK 0xFFFF
 #elif BITS_IN_CHUNK==8
 #define CHUNK_DATA_TYPE unsigned __int8
 #define DCHUNK_DATA_TYPE unsigned __int16
 #define MSB 0xC0
+#define MAX_CHUNK 0xFF
 #endif
 
 extern "C" void numeric_overflow(void);

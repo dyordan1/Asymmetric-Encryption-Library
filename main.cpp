@@ -24,6 +24,7 @@ int main()
 	//create all multi-precision integers
 	mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize),p = mpuint(keySize/2),q = mpuint(keySize/2);
 
+	/*
 	int numTrials = 1000;
 	int numTests = 1000;
 	clock_t averageClocks = 0;
@@ -35,15 +36,15 @@ int main()
 		{
 			PseudoRandom(p);
 			PseudoRandom(q);
-			/*n=p;
-			n += q;
-			e=n-q;
-			d=n-p;
-			if(e != p || d != q)
-			{
-				cout << "WRONG" << endl << "\t" << n << endl << "\t" << p << endl << "\t" << q << endl << "\t" << e << endl << "\t" << d << endl;
-				return 1;
-			}*/
+			//n=p;
+			//n += q;
+			//e=n-q;
+			//d=n-p;
+			//if(e != p || d != q)
+			//{
+			//	cout << "WRONG" << endl << "\t" << n << endl << "\t" << p << endl << "\t" << q << endl << "\t" << e << endl << "\t" << d << endl;
+			//	return 1;
+			//}
 			p %= q;
 			n=p*q+q-p;
 			e=n/q;
@@ -60,6 +61,7 @@ int main()
 	cout << "Operation took on average " << (double)averageClocks/numTrials << " clock cycles";
 
 	return 0;
+	*/
 
 	//get string for encryption
 	string originalMessage;
