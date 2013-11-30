@@ -149,7 +149,10 @@
     </MASM>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ECPoint.cpp" />
+    <ClCompile Include="EllipticCurve.cpp" />
     <ClCompile Include="euclid.cpp" />
+    <ClCompile Include="finite_mpuint.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Message.cpp" />
     <ClCompile Include="mpuint.cpp" />
@@ -157,7 +160,10 @@
     <ClCompile Include="rsa.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ECPoint.h" />
+    <ClInclude Include="EllipticCurve.h" />
     <ClInclude Include="euclid.h" />
+    <ClInclude Include="finite_mpuint.h" />
     <ClInclude Include="Message.h" />
     <ClInclude Include="mpuint.h" />
     <ClInclude Include="random.h" />

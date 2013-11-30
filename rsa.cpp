@@ -36,7 +36,7 @@ static bool IsPrime(const mpuint &p)
 This function generates a (large) prime.
 ----------------------------------------------------------------------------*/
 
-static void GeneratePrime(mpuint &p)
+void GeneratePrime(mpuint &p)
 {
   Random(p);
   p.value[p.length-1] |= MSB;
