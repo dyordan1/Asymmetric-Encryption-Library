@@ -1,6 +1,6 @@
 #include "EllipticCurve.h"
 
-string EllipticCurve::names[4] =
+char* EllipticCurve::names[4] =
 {
 	"P-192",
 	"P-256",
@@ -10,7 +10,7 @@ string EllipticCurve::names[4] =
 
 int EllipticCurve::sizes[4] = {192,256,384,521};
 
-string EllipticCurve::bases[4] =
+char* EllipticCurve::bases[4] =
 {
 	"fffffffffffffffffffffffffffffffeffffffffffffffff",
 	"ffffffff00000001000000000000000000000000ffffffffffffffffffffffff",
@@ -18,7 +18,7 @@ string EllipticCurve::bases[4] =
 	"1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 };
 
-string EllipticCurve::coefficients[4][3] =
+char* EllipticCurve::coefficients[4][3] =
 {
 	{
 		"1",
@@ -42,7 +42,7 @@ string EllipticCurve::coefficients[4][3] =
 	}
 };
 
-string EllipticCurve::points[4][2] =
+char* EllipticCurve::points[4][2] =
 {
 	{
 		"188da80eb03090f67cbf20eb43a18800f4ff0afd82ff1012",

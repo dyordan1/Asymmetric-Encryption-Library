@@ -52,7 +52,7 @@ int main()
 	//getline(cin,originalMessage);
 	
 	srand(time(NULL));
-	string originalMessage = gen_random(10);
+	string originalMessage = gen_random(500);
 
 	string decryptedMessage;
 
@@ -128,10 +128,6 @@ int main()
 		
 		ECPoint Q(ec,x,y);
 		Q *= d;
-
-		cout << P.x << ":" << P.y << endl
-			 << d << endl
-			 << Q.x << ":" << Q.y << endl;
 
 		ECMessage theECMessage(prime,originalMessage.c_str(),originalMessage.size());
 		
