@@ -149,6 +149,7 @@
     </MASM>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ECMessage.cpp" />
     <ClCompile Include="ECPoint.cpp" />
     <ClCompile Include="EllipticCurve.cpp" />
     <ClCompile Include="euclid.cpp" />
@@ -160,6 +161,7 @@
     <ClCompile Include="rsa.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ECMessage.h" />
     <ClInclude Include="ECPoint.h" />
     <ClInclude Include="EllipticCurve.h" />
     <ClInclude Include="euclid.h" />

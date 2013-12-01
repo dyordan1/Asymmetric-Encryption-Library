@@ -1,10 +1,10 @@
 #include "ECPoint.h"
 
-ECPoint::ECPoint(const EllipticCurve &_ec, const finite_mpuint &_x, const finite_mpuint &_y) : ec(_ec), x(_x), y(_y)
+ECPoint::ECPoint(EllipticCurve &_ec, const finite_mpuint &_x, const finite_mpuint &_y) : ec(&_ec), x(_x), y(_y)
 {
 	isInfinite = false;
 }
-ECPoint::ECPoint(const EllipticCurve &_ec, unsigned len, mpuint &base): ec(_ec), x(len,base), y(len,base)
+ECPoint::ECPoint(EllipticCurve &_ec, unsigned len, mpuint &base): ec(&_ec), x(len,base), y(len,base)
 {
 	isInfinite = true;
 }
@@ -30,11 +30,11 @@ void ECPoint::operator += (const ECPoint &point)
 			m = x;
 			m *= x;
 			m *= 3;
-			temp = ec.a;
+			temp = ec->a;
 			temp *= 2;
 			temp *= x;
 			m += temp;
-			m += ec.b;
+			m += ec->b;
 			temp = y;
 			temp *= 2;
 			m /= temp;
@@ -54,7 +54,7 @@ void ECPoint::operator += (const ECPoint &point)
 	}
 	finite_mpuint x3(m),y3(m);
 	x3 *= m;
-	x3 -= ec.a;
+	x3 -= ec->a;
 	x3 -= x;
 	x3 -= point.x;
 	y3 *= x;
@@ -72,9 +72,9 @@ void ECPoint::operator -= (const ECPoint &point)
 	copy.y -= point.y;
 	ECPoint::operator+=(copy);
 }
-void ECPoint::operator *= (finite_mpuint &scalar)
+void ECPoint::operator *= (const finite_mpuint &scalar)
 {
-	ECPoint multiple(*this),multipleCopy(*this),temp(ec,x.length,*(x.base));
+	ECPoint multiple(*this),multipleCopy(*this),temp(*ec,x.length,*(x.base));
 	unsigned i = 0;
 	while (i < scalar.length)
 	{

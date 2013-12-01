@@ -3,15 +3,33 @@
 #include <time.h>
 #include "rsa.h"
 #include "Message.h"
+#include "ECMessage.h"
 #include "random.h"
 #include "mpuint.h"
 #include "finite_mpuint.h"
 #include "ECPoint.h"
+#include <string>
 
 using namespace std;
 
 void testArithmetic(mpuint &d,mpuint &e,mpuint &n,mpuint &p,mpuint &q);
 void testFiniteArithmetic(finite_mpuint &a,finite_mpuint &b,finite_mpuint &c,finite_mpuint &d,finite_mpuint &e,mpuint &p);
+
+string gen_random(const int len)
+{
+	ostringstream stream;
+    static const char alphanum[] =
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz";
+
+    for (int i = 0; i < len; ++i)
+	{
+        stream << alphanum[rand() % (sizeof(alphanum) - 1)];
+    }
+
+	return stream.str();
+}
 
 int main()
 {
@@ -28,10 +46,13 @@ int main()
 	cin.clear();
 	cin.sync();
 
-	//get string for encryption
-	string originalMessage;
-	cout << "Please enter a string:" << endl;
-	getline(cin,originalMessage);
+	////get string for encryption
+	//string originalMessage;
+	//cout << "Please enter a string:" << endl;
+	//getline(cin,originalMessage);
+	
+	srand(time(NULL));
+	string originalMessage = gen_random(10);
 
 	string decryptedMessage;
 
@@ -44,13 +65,14 @@ int main()
 		keySize /= BITS_IN_CHUNK*4;
 		keySize *= 4;
 
-		Message theMessage = Message(keySize,originalMessage);
+		Message theMessage = Message(keySize,originalMessage.c_str(),originalMessage.size());
 
 		//create all multi-precision integers
-		mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize),p = mpuint(keySize/2),q = mpuint(keySize/2);
+		mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize);
 
 		/*
 		//test arithmetic
+		mpuint p = mpuint(keySize/2),q = mpuint(keySize/2);
 		testArithmetic(d,e,n,p,q);
 		return 0;
 		*/
@@ -60,7 +82,13 @@ int main()
 		theMessage.encryptMessage(e,n);
 		theMessage.decryptMessage(d,n);
 
-		decryptedMessage = theMessage.extractMessage();
+		char buff[501];
+
+		int bytesRead = theMessage.extractMessage(buff,500);
+
+		buff[bytesRead] = 0;
+
+		decryptedMessage = string(buff);
 	}
 	else
 	{
@@ -101,42 +129,26 @@ int main()
 		ECPoint Q(ec,x,y);
 		Q *= d;
 
-		finite_mpuint message(2*keySize,prime);
-		Random(message);
-		message %= prime;
+		cout << P.x << ":" << P.y << endl
+			 << d << endl
+			 << Q.x << ":" << Q.y << endl;
 
-		finite_mpuint k(2*keySize,prime);
-		Random(k);
-		k %= prime;
+		ECMessage theECMessage(prime,originalMessage.c_str(),originalMessage.size());
 		
-		ECPoint C1(ec,x,y);
-		C1 *= k;
+		theECMessage.encryptMessage(P,Q);
+		theECMessage.decryptMessage(d);
 
-		ECPoint C2(ec,Q.x,Q.y);
-		C2 *= k;
+		char buff[501];
 
-		finite_mpuint l(C2.x);
-		l += message;
-		
-		ECPoint dC1(ec,C1.x,C1.y);
-		dC1 *= d;
+		int bytesRead = theECMessage.extractMessage(buff,500);
 
-		finite_mpuint decrypted(l);
-		decrypted -= dC1.x;
+		buff[bytesRead] = 0;
 
-		if(message == decrypted)
-		{
-			cout << "Encryption/Decription successful";
-		}
-		else
-		{
-			cout << "Encryption/Decription unsuccessful";
-		}
-
-		return 0;
+		decryptedMessage = string(buff);
 	}
 	
 	//Get encryption cycle results
+	cout << "The original string was:" << endl << originalMessage << endl << endl;
 	cout << "The encryption/decryption cycle came up with:" << endl << decryptedMessage << endl;
 	if(decryptedMessage == originalMessage)
 	{

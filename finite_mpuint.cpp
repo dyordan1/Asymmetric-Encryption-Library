@@ -5,6 +5,16 @@ void finite_mpuint::shift(unsigned bit)
 	mpuint::shift(bit);
 	mpuint::operator%=(*base);
 }
+
+void finite_mpuint::setBase(mpuint &_base)
+{
+	a.setSize(_base.length);
+	b.setSize(_base.length);
+	g.setSize(_base.length);
+	base = &_base;
+	mpuint::setSize(_base.length*2);
+}
+
 finite_mpuint::finite_mpuint(unsigned len, mpuint &_base) : mpuint(len), a(_base.length), b(_base.length), g(_base.length)
 {
 	base = &_base;
