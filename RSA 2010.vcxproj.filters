@@ -33,6 +33,18 @@
     <ClCompile Include="rsa.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ECMessage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ECPoint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EllipticCurve.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="finite_mpuint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mpuint_math.asm">
@@ -53,6 +65,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="rsa.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ECMessage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ECPoint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EllipticCurve.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="finite_mpuint.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
