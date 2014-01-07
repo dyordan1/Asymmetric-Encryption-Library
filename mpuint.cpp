@@ -25,7 +25,7 @@ mpuint::mpuint(unsigned len)
 
 mpuint::mpuint(std::string hexStr, unsigned len)
 {
-	int numChunks = ( hexStr.size()+(BITS_IN_CHUNK/8) )/(BITS_IN_CHUNK/4);
+	int numChunks = (int)( hexStr.size()+(BITS_IN_CHUNK/8) )/(BITS_IN_CHUNK/4);
 	if(len > 0)
 	{
 		length = len;
@@ -37,12 +37,12 @@ mpuint::mpuint(std::string hexStr, unsigned len)
 			length = 1;
 	}
 	value = new CHUNK_DATA_TYPE[length];
-	for(int i=0;i<length;++i)
+	for(unsigned i=0;i<length;++i)
 	{
 		char chunk[BITS_IN_CHUNK/4+1];
 		for(int j=0;j<BITS_IN_CHUNK/8;j++)
 		{
-			int first = hexStr.size() - (i+1)*(BITS_IN_CHUNK/4)+2*j, second = hexStr.size() - (i+1)*(BITS_IN_CHUNK/4)+2*j+1;
+			int first = (int)hexStr.size() - (i+1)*(BITS_IN_CHUNK/4)+2*j, second = (int)hexStr.size() - (i+1)*(BITS_IN_CHUNK/4)+2*j+1;
 			char c1,c2;
 			if(first < 0)
 			{
@@ -207,7 +207,7 @@ void mpuint::operator *= (const mpuint &n)
 				if (k >= length)
 					numeric_overflow();
 				product += value[k];
-				value[k] = product;
+				value[k] = (CHUNK_DATA_TYPE)product;
 				product >>= BITS_IN_CHUNK;
 				++k;
 			}
@@ -223,7 +223,7 @@ void mpuint::operator *= (CHUNK_DATA_TYPE n)
 	for (i = 0; i < length; ++i)
 	{
 		product += n * (DCHUNK_DATA_TYPE)value[i];
-		value[i] = product;
+		value[i] = (CHUNK_DATA_TYPE)product;
 		product >>= BITS_IN_CHUNK;
 	}
 	if (product != 0)
@@ -237,7 +237,7 @@ CHUNK_DATA_TYPE mpuint::remainder(CHUNK_DATA_TYPE n)
 	while (i-- != 0)
 	{
 		DCHUNK_DATA_TYPE dividend = (DCHUNK_DATA_TYPE) rem << BITS_IN_CHUNK | (DCHUNK_DATA_TYPE) value[i];
-		value[i] = dividend / n;
+		value[i] = (CHUNK_DATA_TYPE)(dividend / n);
 		rem = dividend % n;
 	}
 	return rem;
@@ -350,7 +350,7 @@ void mpuint::shift(unsigned bit)
 	for (unsigned i = 0; i < length; ++i)
 	{ 
 		DCHUNK_DATA_TYPE x = ((DCHUNK_DATA_TYPE)value[i] << bit) | rolOver; 
-		value[i] = x; 
+		value[i] = (CHUNK_DATA_TYPE)x; 
 		rolOver = x >> BITS_IN_CHUNK; 
 	}
 	if (rolOver != 0) 
@@ -393,7 +393,7 @@ void mpuint::SmartDivide(const mpuint &dividend, const mpuint &divisor, mpuint &
 	mpuint container(divisor.length+2);
 	//AND with 0
 	container = 0;
-	for(int i=0;i<divisor.length; ++i)
+	for(unsigned i=0;i<divisor.length; ++i)
 	{
 		container.shift(BITS_IN_CHUNK);
 		container += dividend.value[dividend.length-1-i];
@@ -402,7 +402,7 @@ void mpuint::SmartDivide(const mpuint &dividend, const mpuint &divisor, mpuint &
 	CHUNK_DATA_TYPE topChunk = divisor.value[divisor.length-1]+1;
 	mpuint temp(container.length);
 	unsigned sizeDiff = dividend.length-divisor.length;
-	for(int i=0;i<sizeDiff;++i)
+	for(unsigned i=0;i<sizeDiff;++i)
 	{
 		while(container > divisor)
 		{
@@ -415,7 +415,7 @@ void mpuint::SmartDivide(const mpuint &dividend, const mpuint &divisor, mpuint &
 		DCHUNK_DATA_TYPE topTwo = container.value[container.length-2];
 		topTwo <<= BITS_IN_CHUNK;
 		topTwo += container.value[container.length-3];
-		CHUNK_DATA_TYPE result = topTwo/topChunk;
+		CHUNK_DATA_TYPE result = (CHUNK_DATA_TYPE)(topTwo/topChunk);
 		quotient += result;
 		temp = divisor;
 		temp *= result;

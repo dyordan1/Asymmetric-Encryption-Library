@@ -1,15 +1,28 @@
 #include "Message.h"
+#include <windows.h>
+#include <process.h>
 
-Message::Message(unsigned n)
+Message::Message(unsigned len)
 {
-	chunkSize = n;
+	chunkSize = len;
+	d.setSize(len);
+	e.setSize(len);
+	n.setSize(len);
 	length = 0;
+	hasPublic = false;
+	hasPrivate = false;
+	isEncrypted = false;
 }
-Message::Message(unsigned n,const void* message, unsigned len)
+Message::Message(unsigned len,const void* message, unsigned size)
 {
-	chunkSize = n;
+	chunkSize = len;
+	d.setSize(len);
+	e.setSize(len);
+	n.setSize(len);
 	length = 0;
-	embedMessage(message, len);
+	hasPublic = false;
+	hasPrivate = false;
+	embedMessage(message, size);
 }
 
 Message::~Message()
@@ -30,7 +43,7 @@ void Message::embedMessage(const void* message, unsigned len)
 	length = len/(bytesInChunk-2)+1;
 	messageData = new mpuint[length];
 	unsigned char* endOfMessage = ((unsigned char*)message)+len;
-	for(int i=0;i<length;i++)
+	for(unsigned i=0;i<length;i++)
 	{
 		messageData[i].setSize(chunkSize);
 		bool firstPad = true;
@@ -73,9 +86,9 @@ int Message::extractMessage(void* message, unsigned maxLen)
 	{
 		return -1;
 	}
-	int pos = 0;
+	unsigned pos = 0;
 	int bytesInChunk = chunkSize*(BITS_IN_CHUNK/8);
-	for(int i=0;i < length;++i)
+	for(unsigned i=0;i < length;++i)
 	{
 		unsigned char* loc = (unsigned char*) (messageData[i].value);
 		for(int j=0;j<bytesInChunk-2;j++)
@@ -106,28 +119,74 @@ int Message::extractMessage(void* message, unsigned maxLen)
 	return pos;
 }
 
-void Message::encryptMessage(const mpuint &e,const mpuint &n)
+unsigned __stdcall Message::encryptPart(void *mes)
 {
-	if(isEncrypted)
-		return;
-	for(unsigned i=0;i<length;++i)
+	messagePart &part = *((messagePart *)mes);
+	Message &message = *part.theMessage;
+	for(unsigned i=part.begin;i<part.end;++i)
 	{
-		mpuint result = mpuint(messageData[i].length);
-		mpuint::Power(messageData[i],e,n,result);
-		messageData[i] = result;
+		mpuint result = mpuint(message.messageData[i].length);
+		mpuint::Power(message.messageData[i],message.e,message.n,result);
+		message.messageData[i] = result;
 	}
+	return 0;
+}
+
+unsigned __stdcall Message::decryptPart(void *mes)
+{
+	messagePart &part = *((messagePart *)mes);
+	Message &message = *part.theMessage;
+	for(unsigned i=part.begin;i<part.end;++i)
+	{
+		mpuint result = mpuint(message.messageData[i].length);
+		mpuint::Power(message.messageData[i],message.d,message.n,result);
+		message.messageData[i] = result;
+	}
+	return 0;
+}
+
+void Message::encryptMessage()
+{
+	if(length == 0 || isEncrypted || !hasPublic)
+		return;
+	int numThreads = length;
+	if(numThreads > MAX_THREADS)
+		numThreads = MAX_THREADS;
+    unsigned threadID;
+	HANDLE* threads = new HANDLE[numThreads];
+	messagePart* parts = new messagePart[numThreads];
+	for(int i=0;i<numThreads;i++)
+	{
+		parts[i].theMessage = this;
+		parts[i].begin = (length*i)/numThreads;
+		parts[i].end = (length*(i+1))/numThreads;
+		threads[i] = (HANDLE)_beginthreadex( NULL, 0, Message::encryptPart, &parts[i], 0, &threadID );
+	}
+	WaitForMultipleObjects(numThreads,threads,true,INFINITE);
+	delete[] threads;
+	delete[] parts;
 	isEncrypted = true;
 }
 
-void Message::decryptMessage(const mpuint &d,const mpuint &n)
+void Message::decryptMessage()
 {
-	if(!isEncrypted)
+	if(!isEncrypted || !hasPrivate)
 		return;
-	for(unsigned i=0;i<length;++i)
+	int numThreads = length;
+	if(numThreads > MAX_THREADS)
+		numThreads = MAX_THREADS;
+    unsigned threadID;
+	HANDLE* threads = new HANDLE[numThreads];
+	messagePart* parts = new messagePart[numThreads];
+	for(int i=0;i<numThreads;i++)
 	{
-		mpuint result = mpuint(messageData[i].length);
-		mpuint::Power(messageData[i],d,n,result);
-		messageData[i] = result;
+		parts[i].theMessage = this;
+		parts[i].begin = (length*i)/numThreads;
+		parts[i].end = (length*(i+1))/numThreads;
+		threads[i] = (HANDLE)_beginthreadex( NULL, 0, Message::decryptPart, &parts[i], 0, &threadID );
 	}
+	WaitForMultipleObjects(numThreads,threads,true,INFINITE);
+	delete[] threads;
+	delete[] parts;
 	isEncrypted = false;
 }

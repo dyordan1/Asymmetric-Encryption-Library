@@ -51,8 +51,8 @@ int main()
 	//cout << "Please enter a string:" << endl;
 	//getline(cin,originalMessage);
 	
-	srand(time(NULL));
-	string originalMessage = gen_random(500);
+	srand((unsigned)time(NULL));
+	string originalMessage = gen_random(1500);
 
 	string decryptedMessage;
 
@@ -65,26 +65,24 @@ int main()
 		keySize /= BITS_IN_CHUNK*4;
 		keySize *= 4;
 
-		Message theMessage = Message(keySize,originalMessage.c_str(),originalMessage.size());
-
-		//create all multi-precision integers
-		mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize);
+		Message theMessage = Message(keySize,originalMessage.c_str(),(unsigned)originalMessage.size());
 
 		/*
 		//test arithmetic
+		mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize);
 		mpuint p = mpuint(keySize/2),q = mpuint(keySize/2);
 		testArithmetic(d,e,n,p,q);
 		return 0;
 		*/
 
 		//Generate keys and do encryptions cycle
-		GenerateKeys(d,e,n);
-		theMessage.encryptMessage(e,n);
-		theMessage.decryptMessage(d,n);
+		theMessage.generateKeys();
+		theMessage.encryptMessage();
+		theMessage.decryptMessage();
 
-		char buff[501];
+		char* buff = new char[1501];
 
-		int bytesRead = theMessage.extractMessage(buff,500);
+		int bytesRead = theMessage.extractMessage(buff,1500);
 
 		buff[bytesRead] = 0;
 
@@ -129,7 +127,7 @@ int main()
 		ECPoint Q(ec,x,y);
 		Q *= d;
 
-		ECMessage theECMessage(prime,originalMessage.c_str(),originalMessage.size());
+		ECMessage theECMessage(prime,originalMessage.c_str(),(unsigned)originalMessage.size());
 		
 		theECMessage.encryptMessage(P,Q);
 		theECMessage.decryptMessage(d);

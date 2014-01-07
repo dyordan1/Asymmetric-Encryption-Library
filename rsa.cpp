@@ -2,6 +2,8 @@
 #include "rsa.h"
 #include "euclid.h"
 #include "random.h"
+#include <windows.h>
+#include <process.h>
 
 /*----------------------------------------------------------------------------
 This function uses Fermat's Theorem 100 times to test the primeness of a
@@ -36,43 +38,48 @@ static bool IsPrime(const mpuint &p)
 This function generates a (large) prime.
 ----------------------------------------------------------------------------*/
 
-void GeneratePrime(mpuint &p)
+unsigned __stdcall GeneratePrime(void* point)
 {
-  Random(p);
-  p.value[p.length-1] |= MSB;
-  p.value[0] |= 1;
-  while (!IsPrime(p))
-    p += 2;
+	mpuint &p = *((mpuint*)point);
+	p.value[p.length-1] |= MSB;
+	p.value[0] |= 1;
+	while (!IsPrime(p))
+	p += 2;
+	return 0;
 }
-
 
 void GenerateKeys(mpuint &d, mpuint &e, mpuint &n)
 {
 	mpuint p(d.length/2);
 	mpuint q(d.length/2);
-  GeneratePrime(p);
-  GeneratePrime(q);
-  mpuint pp(p);
-  pp -= 1;
-  mpuint qq(q);
-  qq -= 1;
-  mpuint pq(d.length);
-  pq = pp;
-  pq *= qq;
-  n = p;
-  n *= q;
-  Random(d);
-  mpuint halfPhi(n.length);
-  halfPhi = ((p-1)*(q-1))/2;
-  d %= halfPhi;
-  d += halfPhi;
-  mpuint temp(d.length);
-  mpuint g(d.length);
-  while (true)
-  {
-    EuclideanAlgorithm(d, pq, e, temp, g);
-    if (g == 1)
-      break;
-    d += 1;
-  }
+	unsigned threadID;
+	HANDLE threads[2];
+	Random(p);
+	threads[0] = (HANDLE)_beginthreadex( NULL, 0, GeneratePrime, &p, 0, &threadID );
+	Random(q);
+	threads[1] = (HANDLE)_beginthreadex( NULL, 0, GeneratePrime, &q, 0, &threadID );
+	Random(d);
+	WaitForMultipleObjects(2,threads,true,INFINITE);
+	mpuint pp(p);
+	pp -= 1;
+	mpuint qq(q);
+	qq -= 1;
+	mpuint pq(d.length);
+	pq = pp;
+	pq *= qq;
+	n = p;
+	n *= q;
+	mpuint halfPhi(n.length);
+	halfPhi = ((p-1)*(q-1))/2;
+	d %= halfPhi;
+	d += halfPhi;
+	mpuint temp(d.length);
+	mpuint g(d.length);
+	while (true)
+	{
+	EuclideanAlgorithm(d, pq, e, temp, g);
+	if (g == 1)
+		break;
+	d += 1;
+	}
 }

@@ -73,12 +73,15 @@ The easiest way to use RSA is to utilize the pre-built Message class, like so:
     //You can also use embedMessage with a void* and a size to embed a different message at any point
 
     //generate RSA keys
-    mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize);
-    GenerateKeys(d,e,n);
+    theMessage.generateKeys();
+
+    //Note you could also specify pre-generated public and/or private keys by using:
+    //theMessage.setPublicKey(e,n);
+    //theMessage.setPrivateKey(d,n);
 
     //encrypt and decrypt
-    theMessage.encryptMessage(e,n);
-    theMessage.decryptMessage(d,n);
+    theMessage.encryptMessage();
+    theMessage.decryptMessage();
 
     //extract the message again
     char buff[501];
@@ -105,6 +108,7 @@ Well, RSA is just raising a number to a power so, if you wanted to, you could us
     //populate your data mpuint(s)
 
     //as before, you still need to generate keys
+    //but this time you have to manage them yourself.
     mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize);
     GenerateKeys(d,e,n);
 

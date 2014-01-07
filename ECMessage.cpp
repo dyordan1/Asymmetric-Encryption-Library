@@ -50,7 +50,7 @@ void ECMessage::embedMessage(const void* message, unsigned len)
 	messageData = new finite_mpuint[length];
 	messagePoints = new ECPoint[length];
 	unsigned char* endOfMessage = ((unsigned char*)message)+len;
-	for(int i=0;i<length;i++)
+	for(unsigned i=0;i<length;i++)
 	{
 		messageData[i].setBase(*base);
 		bool firstPad = true;
@@ -100,9 +100,9 @@ int ECMessage::extractMessage(void* message, unsigned maxLen)
 	{
 		return -1;
 	}
-	int pos = 0;
+	unsigned pos = 0;
 	int bytesInChunk = chunkSize*(BITS_IN_CHUNK/8)*2;
-	for(int i=0;i < length;++i)
+	for(unsigned i=0;i < length;++i)
 	{
 		unsigned char* loc = (unsigned char*) (messageData[i].value);
 		for(int j=0;j<bytesInChunk-2;j++)
