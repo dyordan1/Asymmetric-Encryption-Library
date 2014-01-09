@@ -1,5 +1,8 @@
 #include "euclid.h"
 
+namespace AsymmEL
+{
+
 /*----------------------------------------------------------------------------
 This function uses the Euclidean algorithm to find the greatest common divisor
 g of the positive integers x and y and also two integers a and b such that
@@ -77,4 +80,7 @@ void GreatestCommonDivisor(const mpuint &x, const mpuint &y, mpuint &g)
   }
   else
     GreatestCommonDivisor(y, x, g);
+}
+
+//end namespace
 }

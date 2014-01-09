@@ -1,9 +1,15 @@
-#ifndef H__MPUINT
-#define H__MPUINT
+#ifndef ASYMMEL_MPUINT_INCLUDED
+#define ASYMMEL_MPUINT_INCLUDED
 
 #include <iostream>
 
+#define MAX_THREADS 10
+
+#ifdef _WIN64
 #define BITS_IN_CHUNK 32
+#elif _WIN32
+#define BITS_IN_CHUNK 16
+#endif
 
 #if BITS_IN_CHUNK==32
 #define USE_ASSEMBLY_IMPLEMENTATIONS
@@ -22,6 +28,9 @@
 #define MSB 0xC0
 #define MAX_CHUNK 0xFF
 #endif
+
+namespace AsymmEL
+{
 
 extern "C" void numeric_overflow(void);
 
@@ -94,5 +103,8 @@ extern "C"
 	void mpuint_sub_asm(unsigned __int32* a, unsigned __int32* b, size_t sizeA, size_t sizeB);
 };
 #endif
+
+//end namespace
+}
 
 #endif

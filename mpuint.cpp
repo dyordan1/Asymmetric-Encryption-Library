@@ -2,6 +2,9 @@
 #include "mpuint.h" 
 #include <iomanip>
 
+namespace AsymmEL
+{
+
 void numeric_overflow(void)
 {
 	printf("Numeric Overflow");
@@ -553,4 +556,7 @@ mpuint operator %(const mpuint &m, CHUNK_DATA_TYPE n)
 	mpuint c = mpuint(m);
 	c %= n;
 	return c;
+}
+
+//end namespace
 }

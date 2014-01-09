@@ -1,9 +1,11 @@
-#pragma once
+#ifndef ASYMMEL_EC_MESSAGE_INCLUDED
+#define ASYMMEL_EC_MESSAGE_INCLUDED
 
 #include "finite_mpuint.h"
 #include "ECPoint.h"
 
-using namespace std;
+namespace AsymmEL
+{
 
 class ECMessage
 {
@@ -22,3 +24,8 @@ public:
 	void decryptMessage(const finite_mpuint d);
     ~ECMessage();
 };
+
+//end namespace
+}
+
+#endif

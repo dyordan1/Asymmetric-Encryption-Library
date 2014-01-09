@@ -1,7 +1,11 @@
-#pragma once
+#ifndef ASYMMEL_FINITE_MPUINT_INCLUDED
+#define ASYMMEL_FINITE_MPUINT_INCLUDED
 
 #include "mpuint.h"
 #include "euclid.h"
+
+namespace AsymmEL
+{
 
 class finite_mpuint: public mpuint
 {
@@ -28,3 +32,7 @@ class finite_mpuint: public mpuint
     void operator /= (CHUNK_DATA_TYPE);
 };
 
+//end namespace
+}
+
+#endif

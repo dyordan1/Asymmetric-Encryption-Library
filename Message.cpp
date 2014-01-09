@@ -2,6 +2,9 @@
 #include <windows.h>
 #include <process.h>
 
+namespace AsymmEL
+{
+
 Message::Message(unsigned len)
 {
 	chunkSize = len;
@@ -189,4 +192,7 @@ void Message::decryptMessage()
 	delete[] threads;
 	delete[] parts;
 	isEncrypted = false;
+}
+
+//end namespace
 }

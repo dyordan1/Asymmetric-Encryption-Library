@@ -1,7 +1,10 @@
-#pragma once
+#ifndef ASYMMEL_ELLIPTIC_CURVE_INCLUDED
+#define ASYMMEL_ELLIPTIC_CURVE_INCLUDED
+
 #include "finite_mpuint.h"
 
-using namespace std;
+namespace AsymmEL
+{
 
 class EllipticCurve
 {
@@ -17,3 +20,8 @@ public:
 	EllipticCurve(const EllipticCurve &ec) :a(ec.a),b(ec.b),c(ec.c) {}
 	friend class ECPoint;
 };
+
+//end namespace
+}
+
+#endif

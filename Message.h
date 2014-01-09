@@ -1,11 +1,11 @@
-#pragma once
+#ifndef ASYMMEL_MESSAGE_INCLUDED
+#define ASYMMEL_MESSAGE_INCLUDED
 
 #include "mpuint.h"
 #include "rsa.h"
 
-using namespace std;
-
-#define MAX_THREADS 50
+namespace AsymmEL
+{
 
 class Message
 {
@@ -50,3 +50,8 @@ public:
 		unsigned end;
 	};
 };
+
+//end namespace
+}
+
+#endif

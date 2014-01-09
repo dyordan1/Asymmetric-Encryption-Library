@@ -1,5 +1,8 @@
 #include "ECPoint.h"
 
+namespace AsymmEL
+{
+
 ECPoint::ECPoint(EllipticCurve &_ec, const finite_mpuint &_x, const finite_mpuint &_y) : ec(&_ec), x(_x), y(_y)
 {
 	isInfinite = false;
@@ -93,4 +96,7 @@ void ECPoint::operator *= (const finite_mpuint &scalar)
 	}
 	x = temp.x;
 	y = temp.y;
+}
+
+//end namespace
 }

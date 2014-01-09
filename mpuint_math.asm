@@ -1,8 +1,4 @@
-ifndef X64
-.686p
-.XMM
-.model flat
-endif
+ifdef X64
 
 EXTRN numeric_overflow:PROC
 
@@ -132,5 +128,13 @@ mpuint_sub_asm PROC
 	POP RBX
 	RET
 mpuint_sub_asm ENDP
+
+else
+
+.686p
+.XMM
+.model flat
+
+endif
 
 end

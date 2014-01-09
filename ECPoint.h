@@ -1,6 +1,10 @@
-#pragma once
+#ifndef ASYMMEL_EC_POINT_INCLUDED
+#define ASYMMEL_EC_POINT_INCLUDED
 
 #include "EllipticCurve.h"
+
+namespace AsymmEL
+{
 
 class ECPoint
 {
@@ -17,3 +21,7 @@ public:
 	void operator *= (const finite_mpuint &scalar);
 };
 
+//end namespace
+}
+
+#endif

@@ -40,10 +40,10 @@ The mpuint class uses assembly implementations of some functions as long as the 
 You can create an mpuint through one of four ways (three constructors):
 
     unsigned len = 16;
-    mpuint a(len); \\will create an mpuint with 16 chunks (512-bit if using 32-bit chunks)
-    mpuint b(a); \\will create an exact copy of an mpuint (both a and b will contain the same garbage value)
-    mpuint c("e8e960c75ce543b17638885d40ad881e", 16); \\c will be a 512-bit integer equal to 0xe8e960c75ce543b17638885d40ad881e
-    mpuint d("e8e960c75ce543b17638885d40ad881e") \\d will be calculated to need 128 bits(4 chunks) to store the same value if the second parameter is ommited.
+    AsymmEL::mpuint a(len); \\will create an mpuint with 16 chunks (512-bit if using 32-bit chunks)
+    AsymmEL::mpuint b(a); \\will create an exact copy of an mpuint (both a and b will contain the same garbage value)
+    AsymmEL::mpuint c("e8e960c75ce543b17638885d40ad881e", 16); \\c will be a 512-bit integer equal to 0xe8e960c75ce543b17638885d40ad881e
+    AsymmEL::mpuint d("e8e960c75ce543b17638885d40ad881e") \\d will be calculated to need 128 bits(4 chunks) to store the same value if the second parameter is ommited.
 
 After you've created the object, you can use the various arithmetic implemented in the code. Binary arithmetic (a+b, a%b) is much slower due to creating temporary copies of objects. Use compound assignment operators (a += b) as much as possible to take advantage of the optimized overloads.
 
@@ -66,7 +66,7 @@ The easiest way to use RSA is to utilize the pre-built Message class, like so:
 
     unsigned short keySize = 32; //for a total of 1024-bit
     string originalMessage = "test";
-    Message theMessage = Message(keySize,originalMessage.c_str(),(unsigned)originalMessage.size());
+    AsymmEL::Message theMessage = AsymmEL::Message(keySize,originalMessage.c_str(),(unsigned)originalMessage.size());
 
     //at this point the message is embedded into the Message object in memory as mpuints
     //Note that the Message constructor accepts a void* and a size so any block of contiguous memory can be embedded.
@@ -103,20 +103,20 @@ Well, RSA is just raising a number to a power so, if you wanted to, you could us
     ( i.e. leave as little leading 0x00 bytes as you can)
     */
     unsigned int keySize = 32;
-    mpuint data(keySize);
+    AsymmEL::mpuint data(keySize);
     
     //populate your data mpuint(s)
 
     //as before, you still need to generate keys
     //but this time you have to manage them yourself.
-    mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize);
+    AsymmEL::mpuint d = AsymmEL::mpuint(keySize),e = AsymmEL::mpuint(keySize),n = AsymmEL::mpuint(keySize);
     GenerateKeys(d,e,n);
 
     //Finally, just raise your message to e and d to encrypt and decrypt
-    mpuint encrypted(keySize);
-    mpuint decrypted(keySize);
-    mpuint::Power(data,e,n,encrypted);
-    mpuint::Power(encrypted,d,n,decrypted);
+    AsymmEL::mpuint encrypted(keySize);
+    AsymmEL::mpuint decrypted(keySize);
+    AsymmEL::mpuint::Power(data,e,n,encrypted);
+    AsymmEL::mpuint::Power(encrypted,d,n,decrypted);
 
 Benefit of this method is that you can now actually transfer the encrypted data over a network or any insecure channel (an anticipated feature on Message as well), which is pretty much the only thing Asymmetric Encryption was made for.
 
@@ -124,6 +124,8 @@ Elliptic Curve Algorithm
 ----------------------------------
 
 Coming soon? This really needs a lot of work so use at your own risk. The ECC code itself is worth a look out of academic curiosity. For reference, below is the part of the code that handles ECC, verbatim.
+
+    using namespace AsymmEL;
 
     unsigned keySize = EllipticCurve::sizes[choice]/BITS_IN_CHUNK;
 
@@ -178,7 +180,7 @@ Things that are currenly worked on or will be visited soon:
  * Significantly improve ECC speed
  * Compile actual lib/dll for use in projects
  * Modify code for:
-   * 32-bit machines
+   * ~~32-bit Windows~~
    * Visual Studio 2010
    * Unix flavors
  * Validate key size input in demo?

@@ -1,6 +1,9 @@
 #include "ECMessage.h"
 #include "random.h"
 
+namespace AsymmEL
+{
+
 ECMessage::ECMessage(mpuint &_base)
 {
 	base = &_base;
@@ -170,4 +173,7 @@ void ECMessage::decryptMessage(const finite_mpuint d)
 		messageData[i] -= messagePoints[i].x;
 	}
 	isEncrypted = false;
+}
+
+//end namespace
 }

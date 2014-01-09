@@ -2,6 +2,9 @@
 #include "mpuint.h"
 #include "random.h"
 
+namespace AsymmEL
+{
+
 static int RandomKey(void)
 {
   int n = 0;
@@ -46,4 +49,7 @@ void Random(mpuint &x)
 	x.value[i] = chunk;
   }
   printf("\r\nThank you\r\n");
+}
+
+//end namespace
 }

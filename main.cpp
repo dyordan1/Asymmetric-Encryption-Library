@@ -11,6 +11,7 @@
 #include <string>
 
 using namespace std;
+using namespace AsymmEL;
 
 void testArithmetic(mpuint &d,mpuint &e,mpuint &n,mpuint &p,mpuint &q);
 void testFiniteArithmetic(finite_mpuint &a,finite_mpuint &b,finite_mpuint &c,finite_mpuint &d,finite_mpuint &e,mpuint &p);

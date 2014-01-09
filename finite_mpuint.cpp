@@ -1,5 +1,8 @@
 #include "finite_mpuint.h"
 
+namespace AsymmEL
+{
+
 void finite_mpuint::shift(unsigned bit)
 {
 	mpuint::shift(bit);
@@ -95,4 +98,7 @@ void finite_mpuint::operator /= (CHUNK_DATA_TYPE n)
 	EuclideanAlgorithm(num,*base,a,b,g);
 	mpuint::operator*=(a);
 	mpuint::operator%=(*base);
+}
+
+//end namespace
 }

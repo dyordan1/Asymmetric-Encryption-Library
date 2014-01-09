@@ -5,6 +5,9 @@
 #include <windows.h>
 #include <process.h>
 
+namespace AsymmEL
+{
+
 /*----------------------------------------------------------------------------
 This function uses Fermat's Theorem 100 times to test the primeness of a
 (large) positive integer.
@@ -82,4 +85,7 @@ void GenerateKeys(mpuint &d, mpuint &e, mpuint &n)
 		break;
 	d += 1;
 	}
+}
+
+//end namespace
 }
