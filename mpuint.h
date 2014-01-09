@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#define MAX_THREADS 10
+#define MAX_THREADS 4
 
 #ifdef _WIN64
 #define BITS_IN_CHUNK 32
