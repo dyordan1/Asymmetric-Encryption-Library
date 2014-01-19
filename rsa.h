@@ -7,7 +7,7 @@
 namespace AsymmEL
 {
 
-void GenerateKeys(mpuint &d, mpuint &e, mpuint &n);
+void GenerateKeys(mpuint &d, mpuint &e, mpuint &n, CHUNK_DATA_TYPE customE = 0);
 
 inline void EncryptDecrypt(mpuint &result, const mpuint &source,
   const mpuint &e, const mpuint &n)

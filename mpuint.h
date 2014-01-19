@@ -39,12 +39,12 @@ class mpuint
   private:
     CHUNK_DATA_TYPE remainder(CHUNK_DATA_TYPE);
   public:
-    void shift(unsigned);
+    unsigned length;
     CHUNK_DATA_TYPE *value;
+    void shift(unsigned);
     bool IsZero(void) const;
     int Compare(const mpuint &) const;
     int Compare(CHUNK_DATA_TYPE) const;
-    unsigned length;
     mpuint(unsigned);
     mpuint(const mpuint &);
     mpuint(std::string hexStr, unsigned len=0);

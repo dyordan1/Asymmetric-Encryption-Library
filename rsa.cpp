@@ -20,6 +20,13 @@ struct checkPrimeParam
 	volatile boolean isPrime;
 };
 
+struct generatePrimeParam
+{
+	mpuint* candidate;
+	mpuint* candidateminus1;
+	CHUNK_DATA_TYPE* e;
+};
+
 unsigned __stdcall checkPrime(void* _params)
 {
 	checkPrimeParam &params = *((checkPrimeParam*)_params);
@@ -49,14 +56,12 @@ unsigned __stdcall checkPrime(void* _params)
 	return 0;
 }
 
-static bool IsPrime(mpuint &p)
+static bool IsPrime(mpuint &p, mpuint &pp)
 {
 
-	mpuint pminus1(p);
-	pminus1 -= 1;
 	checkPrimeParam params;
 	params.candidate = &p;
-	params.candidateminus1 = &pminus1;
+	params.candidateminus1 = &pp;
 	params.isPrime = true;
 	unsigned threadID;
 #if MAX_THREADS>1
@@ -83,47 +88,65 @@ This function generates a (large) prime.
 
 unsigned __stdcall GeneratePrime(void* point)
 {
-	mpuint &p = *((mpuint*)point);
+	generatePrimeParam &params = *((generatePrimeParam*)point);
+	mpuint &p = *params.candidate;
+	mpuint &pp = *params.candidateminus1;
+	CHUNK_DATA_TYPE &e = *params.e;
 	p.value[p.length-1] |= MSB;
 	p.value[0] |= 1;
-	while (!IsPrime(p))
-	p += 2;
+	pp = p;
+	pp -= 1;
+	while (!IsPrime(p,pp) || (e!= 0 && (p-1)%e == 0) )
+	{
+		p += 2;
+		pp += 2;
+	}
 	return 0;
 }
 
-void GenerateKeys(mpuint &d, mpuint &e, mpuint &n)
+void GenerateKeys(mpuint &d, mpuint &e, mpuint &n, CHUNK_DATA_TYPE customE)
 {
 	mpuint p(d.length/2);
 	mpuint q(d.length/2);
+	mpuint pp(p.length);
+	mpuint qq(q.length);
+	mpuint pq(d.length);
+	PseudoRandom(p);
+	PseudoRandom(q);
+	e = customE;
 	unsigned threadID;
 	HANDLE threads[2];
-	Random(p);
-	threads[0] = (HANDLE)_beginthreadex( NULL, 0, GeneratePrime, &p, 0, &threadID );
-	Random(q);
-	threads[1] = (HANDLE)_beginthreadex( NULL, 0, GeneratePrime, &q, 0, &threadID );
-	Random(d);
+	generatePrimeParam paramP;
+	paramP.candidate = &p;
+	paramP.candidateminus1 = &pp;
+	paramP.e = &customE;
+	threads[0] = (HANDLE)_beginthreadex( NULL, 0, GeneratePrime, &paramP, 0, &threadID );
+	generatePrimeParam paramQ;
+	paramQ.candidate = &q;
+	paramQ.candidateminus1 = &qq;
+	paramQ.e = &customE;
+	threads[1] = (HANDLE)_beginthreadex( NULL, 0, GeneratePrime, &paramQ, 0, &threadID );
 	WaitForMultipleObjects(2,threads,true,INFINITE);
-	mpuint pp(p);
-	pp -= 1;
-	mpuint qq(q);
-	qq -= 1;
-	mpuint pq(d.length);
 	pq = pp;
 	pq *= qq;
 	n = p;
 	n *= q;
-	mpuint halfPhi(n.length);
-	halfPhi = ((p-1)*(q-1))/2;
-	d %= halfPhi;
-	d += halfPhi;
 	mpuint temp(d.length);
 	mpuint g(d.length);
-	while (true)
+	if(customE == 0)
 	{
-	EuclideanAlgorithm(d, pq, e, temp, g);
-	if (g == 1)
-		break;
-	d += 1;
+		PseudoRandom(d);
+		while (true)
+		{
+			EuclideanAlgorithm(d, pq, e, temp, g);
+			if (g == 1)
+				break;
+			d += 1;
+		}
+	}
+	else
+	{
+		EuclideanAlgorithm(e, pq, d, temp, g);
 	}
 }
 

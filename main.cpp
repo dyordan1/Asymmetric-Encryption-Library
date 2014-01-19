@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <time.h>
 #include "rsa.h"
@@ -13,6 +14,7 @@
 using namespace std;
 using namespace AsymmEL;
 
+void benchmarkSpeed();
 void testArithmetic(mpuint &d,mpuint &e,mpuint &n,mpuint &p,mpuint &q);
 void testFiniteArithmetic(finite_mpuint &a,finite_mpuint &b,finite_mpuint &c,finite_mpuint &d,finite_mpuint &e,mpuint &p);
 
@@ -153,6 +155,124 @@ int main()
 	{
 		cout << "encryption/decryption cycle unsucessful" << endl;
 	}
+}
+
+void benchmarkSpeed()
+{
+	//all mpuints
+	mpuint d1(512/BITS_IN_CHUNK),e1(512/BITS_IN_CHUNK),n1(512/BITS_IN_CHUNK);
+	mpuint d2(512/BITS_IN_CHUNK),e2(512/BITS_IN_CHUNK),n2(512/BITS_IN_CHUNK);
+	mpuint d3(512/BITS_IN_CHUNK),e3(512/BITS_IN_CHUNK),n3(512/BITS_IN_CHUNK);
+	mpuint d4(1024/BITS_IN_CHUNK),e4(1024/BITS_IN_CHUNK),n4(1024/BITS_IN_CHUNK);
+	mpuint d5(1024/BITS_IN_CHUNK),e5(1024/BITS_IN_CHUNK),n5(1024/BITS_IN_CHUNK);
+	mpuint d6(1024/BITS_IN_CHUNK),e6(1024/BITS_IN_CHUNK),n6(1024/BITS_IN_CHUNK);
+	mpuint m1(512/BITS_IN_CHUNK), enc1(512/BITS_IN_CHUNK);
+	mpuint m2(1024/BITS_IN_CHUNK), enc2(1024/BITS_IN_CHUNK);
+
+	//all clocks
+	clock_t rsakey1,rsakey2;
+	clock_t rsaenc11,rsaenc12,rsaenc13,rsaenc21,rsaenc22,rsaenc23;
+	clock_t rsadec1,rsadec2;
+
+	//random messages for RSA
+	PseudoRandom(m1);
+	PseudoRandom(m2);
+	m1.value[512/BITS_IN_CHUNK-1] = 0;
+	m2.value[1024/BITS_IN_CHUNK-1] = 0;
+
+	//Key generation RSA 512-bit
+	rsakey1 = clock();
+	GenerateKeys(d1,e1,n1,3);
+	GenerateKeys(d2,e2,n2,0xf4);
+	GenerateKeys(d3,e3,n3);
+	rsakey1 = clock() - rsakey1;
+
+	//Encrypt RSA 512-bit e=3
+	rsaenc11 = clock();
+	mpuint::Power(m1,e1,n1,enc1);
+	mpuint::Power(m1,e1,n1,enc1);
+	mpuint::Power(m1,e1,n1,enc1);
+	rsaenc11 = clock() - rsaenc11;
+	
+	//Encrypt RSA 512-bit e=f4
+	rsaenc12 = clock();
+	mpuint::Power(m1,e2,n2,enc1);
+	mpuint::Power(m1,e2,n2,enc1);
+	mpuint::Power(m1,e2,n2,enc1);
+	rsaenc12 = clock() - rsaenc12;
+
+	//Encrypt RSA 512-bit arbitrary e
+	rsaenc13 = clock();
+	mpuint::Power(m1,e3,n3,enc1);
+	mpuint::Power(m1,e3,n3,enc1);
+	mpuint::Power(m1,e3,n3,enc1);
+	rsaenc13 = clock() - rsaenc13;
+
+	//Decrypt RSA 512-bit
+	rsadec1 = clock();
+	mpuint::Power(enc1,d1,n1,m1);
+	mpuint::Power(enc1,d2,n2,m1);
+	mpuint::Power(enc1,d3,n3,m1);
+	rsadec1 = clock() - rsadec1;
+
+	//Key generation RSA 1024-bit
+	rsakey2 = clock();
+	GenerateKeys(d4,e4,n4,3);
+	GenerateKeys(d5,e5,n5,0xf4);
+	GenerateKeys(d6,e6,n6);
+	rsakey2 = clock() - rsakey2;
+
+	//Encrypt RSA 1024-bit e=3
+	rsaenc21 = clock();
+	mpuint::Power(m2,e4,n4,enc2);
+	mpuint::Power(m2,e4,n4,enc2);
+	mpuint::Power(m2,e4,n4,enc2);
+	rsaenc21 = clock() - rsaenc21;
+	
+	//Encrypt RSA 1024-bit e=f4
+	rsaenc22 = clock();
+	mpuint::Power(m2,e5,n5,enc2);
+	mpuint::Power(m2,e5,n5,enc2);
+	mpuint::Power(m2,e5,n5,enc2);
+	rsaenc22 = clock() - rsaenc22;
+
+	//Encrypt RSA 1024-bit arbitrary e
+	rsaenc23 = clock();
+	mpuint::Power(m2,e6,n6,enc2);
+	mpuint::Power(m2,e6,n6,enc2);
+	mpuint::Power(m2,e6,n6,enc2);
+	rsaenc23 = clock() - rsaenc23;
+
+	//Decrypt RSA 1024-bit
+	rsadec2 = clock();
+	mpuint::Power(enc2,d4,n4,m2);
+	mpuint::Power(enc2,d5,n5,m2);
+	mpuint::Power(enc2,d6,n6,m2);
+	rsadec2 = clock() - rsadec2;
+
+	//ECC Multiplication 192 bit
+
+	//ECC Multiplication 256 bit
+
+	//ECC Multiplication 384 bit
+
+	//ECC Multiplication 512 bit
+	
+	cout << "Benchmark results:" << endl << endl;
+	cout << "+---------------+---------------+" << endl;
+	cout << "|" << setw(15) << "Operation" << "|" << setw(15) << "Time(ms)" << "|" << endl;
+	cout << "+---------------+---------------+" << endl;
+	cout << "|" << setw(15) << "RSA 512 e=3" << "|" << setw(15) << rsaenc11/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "RSA 512 e=F4" << "|" << setw(15) << rsaenc12/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "RSA 1024 e=3" << "|" << setw(15) << rsaenc21/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "RSA 1024 e=F4" << "|" << setw(15) << rsaenc22/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "RSA 512 d" << "|" << setw(15) << rsadec1/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "RSA 1024 d" << "|" << setw(15) << rsadec2/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "RSA 512 rand" << "|" << setw(15) << rsaenc13/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "RSA 1024 rand" << "|" << setw(15) << rsaenc23/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "RSA 512 keys" << "|" << setw(15) << rsakey1/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "RSA 1024 keys" << "|" << setw(15) << rsakey2/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "+---------------+---------------+" << endl << endl;
 }
 
 void testArithmetic(mpuint &d,mpuint &e,mpuint &n,mpuint &p,mpuint &q)

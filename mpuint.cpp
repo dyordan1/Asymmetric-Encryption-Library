@@ -395,11 +395,16 @@ void mpuint::SmartDivide(const mpuint &dividend, const mpuint &divisor, mpuint &
 {
 	mpuint container(divisor.length+2);
 	//AND with 0
-	container = 0;
-	for(unsigned i=0;i<divisor.length; ++i)
+	for(unsigned i=0;i<container.length; ++i)
 	{
-		container.shift(BITS_IN_CHUNK);
-		container += dividend.value[dividend.length-1-i];
+		if(i < divisor.length)
+		{
+			container.value[divisor.length-1-i] = dividend.value[dividend.length-1-i];
+		}
+		else
+		{
+			container.value[i] = 0;
+		}
 	}
 	quotient = 0;
 	CHUNK_DATA_TYPE topChunk = divisor.value[divisor.length-1]+1;
