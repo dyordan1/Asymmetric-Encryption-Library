@@ -16,7 +16,7 @@ using namespace AsymmEL;
 
 void benchmarkSpeed();
 void testArithmetic(mpuint &d,mpuint &e,mpuint &n,mpuint &p,mpuint &q);
-void testFiniteArithmetic(finite_mpuint &a,finite_mpuint &b,finite_mpuint &c,finite_mpuint &d,finite_mpuint &e,mpuint &p);
+void testFiniteArithmetic();
 
 string gen_random(const int len)
 {
@@ -36,6 +36,8 @@ string gen_random(const int len)
 
 int main()
 {
+	benchmarkSpeed();
+	return 0;
 	//Get encryption method
 	char method;
 	do
@@ -159,6 +161,8 @@ int main()
 
 void benchmarkSpeed()
 {
+	cout << "Starting Benchmark..." << endl;
+
 	//all mpuints
 	mpuint d1(512/BITS_IN_CHUNK),e1(512/BITS_IN_CHUNK),n1(512/BITS_IN_CHUNK);
 	mpuint d2(512/BITS_IN_CHUNK),e2(512/BITS_IN_CHUNK),n2(512/BITS_IN_CHUNK);
@@ -173,6 +177,7 @@ void benchmarkSpeed()
 	clock_t rsakey1,rsakey2;
 	clock_t rsaenc11,rsaenc12,rsaenc13,rsaenc21,rsaenc22,rsaenc23;
 	clock_t rsadec1,rsadec2;
+	clock_t eccClocks[4];
 
 	//random messages for RSA
 	PseudoRandom(m1);
@@ -215,6 +220,8 @@ void benchmarkSpeed()
 	mpuint::Power(enc1,d3,n3,m1);
 	rsadec1 = clock() - rsadec1;
 
+	cout << "RSA 512 Done." << endl;
+
 	//Key generation RSA 1024-bit
 	rsakey2 = clock();
 	GenerateKeys(d4,e4,n4,3);
@@ -250,13 +257,36 @@ void benchmarkSpeed()
 	mpuint::Power(enc2,d6,n6,m2);
 	rsadec2 = clock() - rsadec2;
 
-	//ECC Multiplication 192 bit
+	cout << "RSA 1024 Done." << endl;
 
-	//ECC Multiplication 256 bit
+	for(int choice=0;choice<4;++choice)
+	{
+		unsigned keySize = EllipticCurve::sizes[choice]/BITS_IN_CHUNK;
 
-	//ECC Multiplication 384 bit
+		mpuint prime(EllipticCurve::bases[choice],keySize);
+		finite_mpuint a(EllipticCurve::coefficients[choice][0],prime,keySize+1),
+						b(EllipticCurve::coefficients[choice][1],prime,keySize+1),
+						c(EllipticCurve::coefficients[choice][2],prime,keySize+1),
+						x(EllipticCurve::points[choice][0],prime,keySize+1),
+						y(EllipticCurve::points[choice][1],prime,keySize+1);
+		EllipticCurve ec(a,b,c);
+		ECPoint P(ec,x,y);
 
-	//ECC Multiplication 512 bit
+		finite_mpuint d(2*keySize,prime);
+		PseudoRandom(d);
+		d %= prime;
+		
+		ECPoint Q(ec,x,y);
+
+		//ECC Multiplication 192 bit
+		//ECC Multiplication 256 bit
+		//ECC Multiplication 384 bit
+		//ECC Multiplication 512 bit
+		eccClocks[choice] = clock();
+		Q *= d;
+		eccClocks[choice] = clock() - eccClocks[choice];
+		cout << "ECC Done." << endl;
+	}
 	
 	cout << "Benchmark results:" << endl << endl;
 	cout << "+---------------+---------------+" << endl;
@@ -272,6 +302,10 @@ void benchmarkSpeed()
 	cout << "|" << setw(15) << "RSA 1024 rand" << "|" << setw(15) << rsaenc23/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
 	cout << "|" << setw(15) << "RSA 512 keys" << "|" << setw(15) << rsakey1/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
 	cout << "|" << setw(15) << "RSA 1024 keys" << "|" << setw(15) << rsakey2/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "ECC 192 mul" << "|" << setw(15) << eccClocks[0]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "ECC 256 mul" << "|" << setw(15) << eccClocks[1]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "ECC 384 mul" << "|" << setw(15) << eccClocks[2]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "ECC 512 mul" << "|" << setw(15) << eccClocks[3]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
 	cout << "+---------------+---------------+" << endl << endl;
 }
 
@@ -313,8 +347,11 @@ void testArithmetic(mpuint &d,mpuint &e,mpuint &n,mpuint &p,mpuint &q)
 	cout << "Operation took on average " << (double)averageClocks/numTrials << " clock cycles";
 }
 
-void testFiniteArithmetic(finite_mpuint &a,finite_mpuint &b,finite_mpuint &c,finite_mpuint &d,finite_mpuint &e,mpuint &p)
+void testFiniteArithmetic()
 {
+	mpuint p(2);
+	PseudoRandom(p);
+	finite_mpuint a(3,p), b(3,p), c(3,p), d(3,p), e(3,p);
 	int numTrials = 1000;
 	int numTests = 1000;
 	clock_t averageClocks = 0;

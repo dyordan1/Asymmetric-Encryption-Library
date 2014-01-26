@@ -365,7 +365,7 @@ void mpuint::Divide(const mpuint &dividend, const mpuint &divisor, mpuint &quoti
 { 
         if (divisor.IsZero())
                 numeric_overflow();
-		if (divisor.value[divisor.length-1] != MAX_CHUNK  && (divisor.value[divisor.length-1] & MSB<<1))
+		if (divisor.value[divisor.length-1] & MSB<<1)
 		{
 			SmartDivide(dividend,divisor,quotient,remainder);
 			return;
@@ -407,7 +407,7 @@ void mpuint::SmartDivide(const mpuint &dividend, const mpuint &divisor, mpuint &
 		}
 	}
 	quotient = 0;
-	CHUNK_DATA_TYPE topChunk = divisor.value[divisor.length-1]+1;
+	DCHUNK_DATA_TYPE topChunk = (DCHUNK_DATA_TYPE)divisor.value[divisor.length-1]+1;
 	mpuint temp(container.length);
 	unsigned sizeDiff = dividend.length-divisor.length;
 	for(unsigned i=0;i<sizeDiff;++i)
@@ -445,10 +445,13 @@ void mpuint::operator /= (const mpuint &n)
 } 
 
 void mpuint::operator %= (const mpuint &n) 
-{ 
-	mpuint quotient(length); 
-	mpuint dividend(*this);
-	Divide(dividend, n, quotient, *this);
+{
+	if(*this > n)
+	{
+		mpuint quotient(length); 
+		mpuint dividend(*this);
+		Divide(dividend, n, quotient, *this);
+	}
 }
 
 void mpuint::Power(const mpuint &base, const mpuint &exponent,
