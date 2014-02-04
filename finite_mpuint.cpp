@@ -15,7 +15,7 @@ void finite_mpuint::setBase(mpuint &_base)
 	b.setSize(_base.length);
 	g.setSize(_base.length);
 	base = &_base;
-	mpuint::setSize(_base.length*2);
+	mpuint::setSize(_base.length+1);
 }
 
 finite_mpuint::finite_mpuint(unsigned len, mpuint &_base) : mpuint(len), a(_base.length), b(_base.length), g(_base.length)
@@ -77,8 +77,11 @@ void finite_mpuint::operator -= (CHUNK_DATA_TYPE n)
 }
 void finite_mpuint::operator *= (const mpuint &n)
 {
-	mpuint::operator*=(n);
-	mpuint::operator%=(*base);
+	mpuint dbl(length*2);
+	dbl = *this;
+	dbl *= n;
+	dbl %= *base;
+	operator =(dbl);
 }
 void finite_mpuint::operator *= (CHUNK_DATA_TYPE n)
 {
@@ -88,16 +91,22 @@ void finite_mpuint::operator *= (CHUNK_DATA_TYPE n)
 void finite_mpuint::operator /= (const mpuint &n)
 {
 	EuclideanAlgorithm(n,*base,a,b,g);
-	mpuint::operator*=(a);
-	mpuint::operator%=(*base);
+	mpuint dbl(length*2);
+	dbl = *this;
+	dbl *= a;
+	dbl %= *base;
+	operator =(dbl);
 }
 void finite_mpuint::operator /= (CHUNK_DATA_TYPE n)
 {
 	mpuint num(base->length);
 	num = n;
 	EuclideanAlgorithm(num,*base,a,b,g);
-	mpuint::operator*=(a);
-	mpuint::operator%=(*base);
+	mpuint dbl(length*2);
+	dbl = *this;
+	dbl *= a;
+	dbl %= *base;
+	operator =(dbl);
 }
 
 //end namespace
