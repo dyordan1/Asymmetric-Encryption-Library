@@ -15,7 +15,7 @@ using namespace std;
 using namespace AsymmEL;
 
 void benchmarkSpeed();
-void testArithmetic(mpuint &d,mpuint &e,mpuint &n,mpuint &p,mpuint &q);
+void testArithmetic();
 void testFiniteArithmetic();
 
 string gen_random(const int len)
@@ -74,9 +74,7 @@ int main()
 
 		/*
 		//test arithmetic
-		mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize);
-		mpuint p = mpuint(keySize/2),q = mpuint(keySize/2);
-		testArithmetic(d,e,n,p,q);
+		testArithmetic();
 		return 0;
 		*/
 
@@ -309,8 +307,11 @@ void benchmarkSpeed()
 	cout << "+---------------+---------------+" << endl << endl;
 }
 
-void testArithmetic(mpuint &d,mpuint &e,mpuint &n,mpuint &p,mpuint &q)
+void testArithmetic()
 {
+	int keySize = 16;
+	mpuint d = mpuint(keySize),e = mpuint(keySize),n = mpuint(keySize);
+	mpuint p = mpuint(keySize/2),q = mpuint(keySize/2);
 	int numTrials = 1000;
 	int numTests = 1000;
 	clock_t averageClocks = 0;
@@ -349,8 +350,7 @@ void testArithmetic(mpuint &d,mpuint &e,mpuint &n,mpuint &p,mpuint &q)
 
 void testFiniteArithmetic()
 {
-	mpuint p(2);
-	PseudoRandom(p);
+	mpuint p("499602D3",2);
 	finite_mpuint a(3,p), b(3,p), c(3,p), d(3,p), e(3,p);
 	int numTrials = 1000;
 	int numTests = 1000;
@@ -373,7 +373,7 @@ void testFiniteArithmetic()
 			d/=a;
 			if(e != a || d != b)
 			{
-				cout << "WRONG" << endl << "\t" << a << endl << "\t" << b << endl << "\t" << c << endl << "\t" << d << endl << "\t" << e << endl;
+				cout << "WRONG" << endl << "\t" << a << endl << "\t" << b << endl << "\t" << c << endl << "\t" << d << endl << "\t" << e << endl << "\t" << p << endl;
 				return;
 			}
 		}
