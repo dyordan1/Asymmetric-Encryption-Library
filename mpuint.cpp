@@ -63,7 +63,7 @@ mpuint::mpuint(std::string hexStr, unsigned len)
 			{
 				c2 = hexStr[second];
 			}
-			sprintf(&chunk[2*j],"%c%c",c1,c2);
+			sprintf_s(&chunk[2*j],3,"%c%c",c1,c2);
 		}
 		sscanf_s(chunk, "%x", &value[i]);
 	}
@@ -91,7 +91,7 @@ mpuint::~mpuint()
 	delete [] value;
 }
 
-void mpuint::operator = (const mpuint &n)
+const mpuint & mpuint::operator = (const mpuint &n)
 {
 	unsigned i;
 	for (i = 0; i < length && i < n.length; ++i)
@@ -103,6 +103,7 @@ void mpuint::operator = (const mpuint &n)
 		if (n.value[i] != 0)
 			numeric_overflow();
 	}
+	return n;
 }
 
 void mpuint::operator = (CHUNK_DATA_TYPE n)
@@ -360,6 +361,46 @@ void mpuint::shift(unsigned bit)
 		numeric_overflow();
 } 
 
+void mpuint::shiftRight(unsigned bit)
+{
+	unsigned fullChunks = bit/BITS_IN_CHUNK;
+	bit %= BITS_IN_CHUNK;
+	if(fullChunks != 0)
+	{
+		for (int i = fullChunks; i < length; ++i)
+		{
+			value[i-fullChunks] = value[i];
+		}
+		for(int i = length-fullChunks-1; i<length; i++)
+		{
+			value[i] = 0;
+		}
+	}
+	if(bit != 0)
+	{
+		CHUNK_DATA_TYPE rolOver = 0;
+		for (int i = length-1; i >= 0; --i)
+		{
+			CHUNK_DATA_TYPE x = (value[i] >> bit) | rolOver; 
+			rolOver = value[i] << (BITS_IN_CHUNK-bit);
+			value[i] = (CHUNK_DATA_TYPE)x;
+		}
+	}
+} 
+
+void mpuint::saveBits(unsigned bit)
+{
+	unsigned maxChunk = bit/BITS_IN_CHUNK+1;
+	for(int i=maxChunk;i<length;i++)
+	{
+		value[i] = 0;
+	}
+	unsigned numBitsinLast = bit%BITS_IN_CHUNK;
+	CHUNK_DATA_TYPE bitmask = -1;
+	bitmask >>= (BITS_IN_CHUNK-numBitsinLast);
+	value[maxChunk-1] &= bitmask;
+} 
+
 void mpuint::Divide(const mpuint &dividend, const mpuint &divisor, mpuint &quotient,
   mpuint &remainder)
 { 
@@ -454,9 +495,137 @@ void mpuint::operator %= (const mpuint &n)
 	}
 }
 
-void mpuint::Power(const mpuint &base, const mpuint &exponent,
+void xbinGCD(const mpuint & binPow, const mpuint & m, mpuint& pu, mpuint& pv) 
+ { 
+	mpuint alpha(binPow), u(binPow.length+2), v(binPow.length+2); 
+ 
+	u = 1; v = 0; 
+ 
+	/* The invariant maintained from here on is: 
+	a = u*2*alpha - v*beta. */ 
+ 
+	while ((alpha.value[0] & 1) == 0)
+	{ 
+		alpha.shiftRight(1); 
+		if ((u.value[0] & 1) == 0)
+		{
+			u.shiftRight(1);
+			v.shiftRight(1);
+		}
+		else
+		{ 
+			u += m;
+			u.shiftRight(1);
+			v += binPow; 
+			v.shiftRight(1);
+		} 
+	}
+	
+	pu = u;
+	pv = v;
+
+	return; 
+}
+
+void multiplyMontgomery(const mpuint &aR, const mpuint &bR, mpuint &result, int bitlength, const mpuint &m, const mpuint &mP)
+{
+	mpuint temp(aR.length+bR.length);
+	temp = aR;
+	//temp = a' x b'
+	temp *= bR;
+	// u = (mP(temp mod R))mod R
+	mpuint u(temp);
+	u.saveBits(bitlength);
+	u *= mP;
+	u.saveBits(bitlength);
+	// u = (temp+modulus*u)/R
+	u *= m;
+	u += temp;
+	u.shiftRight(bitlength);
+	if(u >= m)
+	{
+		u -= m;
+	}
+
+	result = u;
+}
+
+void Montgomery(const mpuint &base, const mpuint &exponent,
   const mpuint &modulus, mpuint &result)
 {
+	//find bitsize of modulus
+	int bitlength = modulus.length;
+	for(int i=modulus.length-1;i>=0;--i)
+	{
+		if(modulus.value[i] != 0)
+			break;
+		--bitlength;
+	}
+	CHUNK_DATA_TYPE chunk = modulus.value[bitlength-1];
+	bitlength *= BITS_IN_CHUNK;
+	CHUNK_DATA_TYPE bitmask = 1<<(BITS_IN_CHUNK-1);
+	while((chunk & bitmask) == 0)
+	{
+		--bitlength;
+		bitmask >>= 1;
+	}
+
+	//R = 2^(bitsize+1)
+	int rSize = bitlength/BITS_IN_CHUNK+1;
+	mpuint R;
+	if(rSize%2 == 1)
+		R.setSize(rSize+1);
+	else
+		R.setSize(rSize);
+	R = 0;
+	R.value[rSize-1] |= 1<<(bitlength%BITS_IN_CHUNK);
+	mpuint rP(R.length),mP(R.length);
+
+	//find R^-1 and k (rP,mP)
+	xbinGCD(R,modulus,rP,mP);
+
+	//aR = a*R mod N (base*R mod modulus)
+	mpuint temp(base.length+R.length);
+	temp = base;
+	temp *= R;
+	temp %= modulus;
+	mpuint aR(R.length),aRCopy(R.length);
+	aR = aRCopy = temp;
+
+	//start with the residue of a result of 1
+	mpuint res(R.length);
+	res = R;
+	res %= modulus;
+
+	unsigned chunkID = 0;
+	while (chunkID < exponent.length)
+	{
+		CHUNK_DATA_TYPE bit = 1;
+		do
+		{
+			if (exponent.value[chunkID] & bit)
+			{
+				multiplyMontgomery(res,aR,res,bitlength,modulus,mP);
+			}
+			bit <<= 1;
+			multiplyMontgomery(aR,aR,aRCopy,bitlength,modulus,mP);
+			aR = aRCopy;
+		} while (bit != 0);
+		++chunkID;
+	}
+
+	res *= rP;
+	res %= modulus;
+	result = res;
+}
+
+void mpuint::Power(const mpuint &base, const mpuint &exponent,
+  const mpuint &modulus, mpuint &result, bool mont)
+{
+	if(mont)
+	{
+		Montgomery(base,exponent,modulus,result);
+	}
 	mpuint r(2*modulus.length+1);
 	mpuint binPow(2*base.length);
 	mpuint binPowCopy(2*base.length);

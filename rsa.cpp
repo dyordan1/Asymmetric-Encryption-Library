@@ -104,15 +104,23 @@ unsigned __stdcall GeneratePrime(void* point)
 	return 0;
 }
 
-void GenerateKeys(mpuint &d, mpuint &e, mpuint &n, CHUNK_DATA_TYPE customE)
+void GenerateKeys(mpuint &d, mpuint &e, mpuint &n, CHUNK_DATA_TYPE customE, bool pseudoKeys)
 {
 	mpuint p(d.length/2);
 	mpuint q(d.length/2);
 	mpuint pp(p.length);
 	mpuint qq(q.length);
 	mpuint pq(d.length);
-	PseudoRandom(p);
-	PseudoRandom(q);
+	if(pseudoKeys)
+	{
+		PseudoRandom(p);
+		PseudoRandom(q);
+	}
+	else
+	{
+		Random(p);
+		Random(q);
+	}
 	e = customE;
 	unsigned threadID;
 	HANDLE threads[2];
@@ -135,7 +143,10 @@ void GenerateKeys(mpuint &d, mpuint &e, mpuint &n, CHUNK_DATA_TYPE customE)
 	mpuint g(d.length);
 	if(customE == 0)
 	{
-		PseudoRandom(d);
+		if(pseudoKeys)
+			PseudoRandom(d);
+		else
+			Random(d);
 		while (true)
 		{
 			EuclideanAlgorithm(d, pq, e, temp, g);

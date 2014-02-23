@@ -42,6 +42,8 @@ class mpuint
     unsigned length;
     CHUNK_DATA_TYPE *value;
     void shift(unsigned);
+    void shiftRight(unsigned);
+	void saveBits(unsigned);
     bool IsZero(void) const;
     int Compare(const mpuint &) const;
     int Compare(CHUNK_DATA_TYPE) const;
@@ -51,7 +53,7 @@ class mpuint
 	mpuint() {length=0;};
 	void setSize(unsigned);
     ~mpuint();
-    void operator = (const mpuint &);
+    const mpuint & operator = (const mpuint &);
     void operator = (CHUNK_DATA_TYPE);
     void operator += (const mpuint &);
     void operator += (CHUNK_DATA_TYPE);
@@ -63,6 +65,50 @@ class mpuint
     void operator /= (CHUNK_DATA_TYPE);
     void operator %= (const mpuint &);
     void operator %= (CHUNK_DATA_TYPE);
+    void operator &= (const mpuint &n)
+	{
+		unsigned len;
+		if(n.length <= len)
+			len = n.length;
+		else
+			numeric_overflow();
+		for(unsigned i=0;i<len;++i)
+		{
+			value[i] &= n.value[i];
+		}
+		for(unsigned i=len;i<length;++i)
+		{
+			value[i] = 0;
+		}
+	}
+    void operator |= (const mpuint &n)
+	{
+		unsigned len;
+		if(n.length <= len)
+			len = n.length;
+		else
+			numeric_overflow();
+		for(unsigned i=0;i<len;++i)
+		{
+			value[i] |= n.value[i];
+		}
+	}
+    void operator ^= (const mpuint &n)
+	{
+		unsigned len;
+		if(n.length <= len)
+			len = n.length;
+		else
+			numeric_overflow();
+		for(unsigned i=0;i<len;++i)
+		{
+			value[i] ^= n.value[i];
+		}
+		for(unsigned i=len;i<length;++i)
+		{
+			value[i] ^= 0;
+		}
+	}
     static void Divide(const mpuint &, const mpuint &, mpuint &, mpuint &);
     static void SmartDivide(const mpuint &, const mpuint &, mpuint &, mpuint &);
     CHUNK_DATA_TYPE *edit(CHUNK_DATA_TYPE *) const;
@@ -82,7 +128,7 @@ class mpuint
     bool mpuint::operator <= (CHUNK_DATA_TYPE n) const {return Compare(n) <= 0;}
 	friend std::ostream& operator<<(std::ostream& out,mpuint h);
     static void Power(const mpuint &, const mpuint &, const mpuint &,
-      mpuint &);
+      mpuint &, bool mont = false);
 };
 
 mpuint operator +(const mpuint &, const mpuint &);
