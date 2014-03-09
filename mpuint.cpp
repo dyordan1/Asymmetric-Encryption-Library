@@ -2,6 +2,8 @@
 #include "mpuint.h" 
 #include <iomanip>
 
+#include "euclid.h"
+
 namespace AsymmEL
 {
 
@@ -390,7 +392,7 @@ void mpuint::shiftRight(unsigned bit)
 
 void mpuint::saveBits(unsigned bit)
 {
-	unsigned maxChunk = bit/BITS_IN_CHUNK+1;
+	unsigned maxChunk = (bit+BITS_IN_CHUNK-1)/BITS_IN_CHUNK;
 	for(int i=maxChunk;i<length;i++)
 	{
 		value[i] = 0;
@@ -580,9 +582,10 @@ void Montgomery(const mpuint &base, const mpuint &exponent,
 	R = 0;
 	R.value[rSize-1] |= 1<<(bitlength%BITS_IN_CHUNK);
 	mpuint rP(R.length),mP(R.length);
+	mpuint g(R.length);
 
 	//find R^-1 and k (rP,mP)
-	xbinGCD(R,modulus,rP,mP);
+	EuclideanAlgorithm(R,modulus,rP,mP,g);
 
 	//aR = a*R mod N (base*R mod modulus)
 	mpuint temp(base.length+R.length);
@@ -614,8 +617,11 @@ void Montgomery(const mpuint &base, const mpuint &exponent,
 		++chunkID;
 	}
 
-	res *= rP;
-	res %= modulus;
+	mpuint resCpy(res.length*2);
+	resCpy = res;
+	resCpy *= rP;
+	resCpy %= modulus;
+	result = resCpy;
 	result = res;
 }
 
