@@ -40,7 +40,7 @@ mpuint_add_asm PROC
 			noCarry:
 			ADD RBX,2
 			CMP RBX, R9
-			JNE loopBegin
+			JB loopBegin
 			JMP endGracefully
 		bailOutWithError:
 		CALL numeric_overflow
@@ -104,7 +104,7 @@ mpuint_sub_asm PROC
 			SUB [RCX+4*RBX], RAX
 			ADD RBX,2
 			CMP RBX, R9
-			JNE loopBegin
+			JB loopBegin
 			JMP endGracefully
 		bailOutWithError:
 		CALL numeric_overflow

@@ -36,36 +36,6 @@ string gen_random(const int len)
 
 int main()
 {
-	mpuint x = mpuint("8afb1366819d83c2bbb639869c79f00a488a58816cb55c859ae1df42f43fe7d4a8b65e49fec662f3b705cad2bbbc5f35fd0412daf9209c1c23f6f286fcc8a718fa6a598fc0faa13fa899910eae2c711a51915ce19275f01fe17eaec382d5884a7477de4975f01fe17eaec382d5884a7477de4975f01fe17eaec382d5884a7477");
-	mpuint y = mpuint("f5a46138db2aa265daf744c645fc8b36b98020b2604c24122f21b3239bb07ceeed387cc01db9ea8d65281255155a27e141e89f3d355f247a1d0ffaf4ff4514c64157cde7e83178d91d449f3dc74ae35b53cf88043b65b102dc74ae35b53cf88043b65b102dc74ae35b53cf88043b65b102dc74ae35b53cf9");
-	mpuint e = mpuint(32);
-	PseudoRandom(e);
-	mpuint z1(32),z2(32);
-
-	const int NUM_TRIALS = 100;
-	double modClock;
-	
-	modClock = clock();
-	for(int i=0; i < NUM_TRIALS; ++i)
-	{
-		mpuint::Power(x,e,y,z1,true);
-	}
-	modClock = clock() - modClock;
-	modClock /= NUM_TRIALS;
-
-	cout << modClock << endl;
-	
-	modClock = clock();
-	for(int i=0; i < NUM_TRIALS; ++i)
-	{
-		mpuint::Power(x,e,y,z2);
-	}
-	modClock = clock() - modClock;
-	modClock /= NUM_TRIALS;
-
-	cout << modClock << endl;
-
-	return 0;
 	//Get encryption method
 	char method;
 	do
@@ -163,9 +133,9 @@ int main()
 		theECMessage.encryptMessage(P,Q);
 		theECMessage.decryptMessage(d);
 
-		char buff[501];
+		char buff[1501];
 
-		int bytesRead = theECMessage.extractMessage(buff,500);
+		int bytesRead = theECMessage.extractMessage(buff,1500);
 
 		buff[bytesRead] = 0;
 
@@ -440,8 +410,8 @@ void testArithmetic()
 void testFiniteArithmetic()
 {
 	mpuint p("499602D3",2);
-	finite_mpuint a(3,p), b(3,p), c(3,p), d(3,p), e(3,p);
-	int numTrials = 1000;
+	finite_mpuint a(4,p), b(4,p), c(4,p), d(4,p), e(4,p);
+	int numTrials = 100;
 	int numTests = 1000;
 	clock_t averageClocks = 0;
 	

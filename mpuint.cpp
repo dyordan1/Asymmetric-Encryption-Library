@@ -90,11 +90,16 @@ mpuint::mpuint(const mpuint &n)
 
 mpuint::~mpuint()
 {
-	delete [] value;
+	if(length != 0)
+	{
+		delete [] value;
+	}
 }
 
 const mpuint & mpuint::operator = (const mpuint &n)
 {
+	if(length == 0)
+		setSize(n.length);
 	unsigned i;
 	for (i = 0; i < length && i < n.length; ++i)
 		value[i] = n.value[i];
@@ -118,8 +123,13 @@ void mpuint::operator = (CHUNK_DATA_TYPE n)
 void mpuint::operator += (const mpuint &n)
 {
 #ifdef USE_ASSEMBLY_IMPLEMENTATIONS
-	mpuint_add_asm(this->value,n.value,length,n.length);
-#else
+	if(this->length%2 == 0 && n.length%2 == 0)
+	{
+		mpuint_add_asm(this->value,n.value,length,n.length);
+	}
+	else
+	{
+#endif
 	unsigned i;
 	DCHUNK_DATA_TYPE carry = 0;
 	for (i = 0; i < length; ++i)
@@ -134,6 +144,8 @@ void mpuint::operator += (const mpuint &n)
 	{
 		if (n.value[i] != 0)
 			numeric_overflow();
+	}
+#ifdef USE_ASSEMBLY_IMPLEMENTATIONS
 	}
 #endif
 }
@@ -156,8 +168,13 @@ void mpuint::operator += (CHUNK_DATA_TYPE n)
 void mpuint::operator -= (const mpuint &n)
 {
 #ifdef USE_ASSEMBLY_IMPLEMENTATIONS
-	mpuint_sub_asm(this->value,n.value,length,n.length);
-#else
+	if(this->length%2 == 0 && n.length%2 == 0)
+	{
+		mpuint_sub_asm(this->value,n.value,length,n.length);
+	}
+	else
+	{
+#endif
 	unsigned i;
 	DCHUNK_DATA_TYPE borrow = 0;
 	for (i = 0; i < length; ++i)
@@ -172,6 +189,8 @@ void mpuint::operator -= (const mpuint &n)
 	{
 		if (n.value[i] != 0)
 			numeric_overflow();
+	}
+#ifdef USE_ASSEMBLY_IMPLEMENTATIONS
 	}
 #endif
 }
@@ -529,6 +548,41 @@ void xbinGCD(const mpuint & binPow, const mpuint & m, mpuint& pu, mpuint& pv)
 	return; 
 }
 
+void multBits(mpuint a, mpuint b, int bitlength)
+{
+	unsigned i;
+	DCHUNK_DATA_TYPE *multiplier = new DCHUNK_DATA_TYPE[a.length];
+	for (i = 0; i < a.length; ++i)
+	{
+		multiplier[i] = a.value[i];
+		a.value[i] = 0;
+	}
+	int numChunks = bitlength/BITS_IN_CHUNK+1;
+	for (i = 0; i < numChunks; ++i)
+	{
+		unsigned j;
+		for (j = 0; j < numChunks-i; ++j)
+		{
+			DCHUNK_DATA_TYPE product = multiplier[i] * b.value[j];
+			unsigned k = i + j;
+			while (product != 0)
+			{
+				if (k >= numChunks)
+					break;
+				product += a.value[k];
+				a.value[k] = (CHUNK_DATA_TYPE)product;
+				product >>= BITS_IN_CHUNK;
+				++k;
+			}
+		}
+	}
+	unsigned numBitsinLast = bitlength%BITS_IN_CHUNK;
+	CHUNK_DATA_TYPE bitmask = -1;
+	bitmask >>= (BITS_IN_CHUNK-numBitsinLast);
+	a.value[numChunks-1] &= bitmask;
+	delete [] multiplier;
+}
+
 void multiplyMontgomery(const mpuint &aR, const mpuint &bR, mpuint &result, int bitlength, const mpuint &m, const mpuint &mP)
 {
 	mpuint temp(aR.length+bR.length);
@@ -538,8 +592,7 @@ void multiplyMontgomery(const mpuint &aR, const mpuint &bR, mpuint &result, int 
 	// u = (mP(temp mod R))mod R
 	mpuint u(temp);
 	u.saveBits(bitlength);
-	u *= mP;
-	u.saveBits(bitlength);
+	multBits(u,mP,bitlength);
 	// u = (temp+modulus*u)/R
 	u *= m;
 	u += temp;

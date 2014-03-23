@@ -21,7 +21,7 @@ public:
 	void embedMessage(const void* message, unsigned len);
 	int extractMessage(void* message, unsigned maxLen);
 	void encryptMessage(const ECPoint &P, const ECPoint &Q);
-	void decryptMessage(const finite_mpuint d);
+	void decryptMessage(const finite_mpuint &d);
     ~ECMessage();
 };
 

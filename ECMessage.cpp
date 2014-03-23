@@ -21,8 +21,11 @@ ECMessage::ECMessage(mpuint &_base, const void* message, unsigned len)
 
 ECMessage::~ECMessage()
 {
-	delete [] messageData;
-	delete [] messagePoints;
+	if(length != 0)
+	{
+		delete [] messageData;
+		delete [] messagePoints;
+	}
 }
 
 void ECMessage::embedMessage(const void* message, unsigned len)
@@ -32,7 +35,10 @@ void ECMessage::embedMessage(const void* message, unsigned len)
 	// |__..__|____..|
 	// Padding (to prevent data collision) - Data
 	if(length != 0)
+	{
 		delete [] messageData;
+		delete [] messagePoints;
+	}
 	isEncrypted = false;
 	int bytesInChunk = chunkSize*(BITS_IN_CHUNK/8);
 	int usableBytes = bytesInChunk;
@@ -90,7 +96,7 @@ void ECMessage::embedMessage(const void* message, unsigned len)
 				*(loc+j) = 0x00;
 			}
 		}
-		for(int j=bytesInChunk;j<2*bytesInChunk;++j)
+		for(int j=bytesInChunk;j<bytesInChunk+2*(BITS_IN_CHUNK/8);++j)
 		{
 			*(loc+j) = 0x00;
 		}
@@ -104,7 +110,7 @@ int ECMessage::extractMessage(void* message, unsigned maxLen)
 		return -1;
 	}
 	unsigned pos = 0;
-	int bytesInChunk = chunkSize*(BITS_IN_CHUNK/8)*2;
+	int bytesInChunk = (chunkSize+2)*(BITS_IN_CHUNK/8);
 	for(unsigned i=0;i < length;++i)
 	{
 		unsigned char* loc = (unsigned char*) (messageData[i].value);
@@ -162,7 +168,7 @@ void ECMessage::encryptMessage(const ECPoint &P, const ECPoint &Q)
 	isEncrypted = true;
 }
 
-void ECMessage::decryptMessage(const finite_mpuint d)
+void ECMessage::decryptMessage(const finite_mpuint &d)
 {
 	if(!isEncrypted)
 		return;

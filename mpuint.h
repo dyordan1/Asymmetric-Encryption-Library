@@ -65,6 +65,14 @@ class mpuint
     void operator /= (CHUNK_DATA_TYPE);
     void operator %= (const mpuint &);
     void operator %= (CHUNK_DATA_TYPE);
+    void operator <<= (unsigned n)
+	{
+		shift(n);
+	}
+    void operator >>= (unsigned n)
+	{
+		shiftRight(n);
+	}
     void operator &= (const mpuint &n)
 	{
 		unsigned len;
