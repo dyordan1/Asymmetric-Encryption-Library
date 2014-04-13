@@ -14,9 +14,10 @@
 using namespace std;
 using namespace AsymmEL;
 
-void benchmarkSpeed();
+void benchmarkSpeed(bool ecc=true, bool rsa=true);
 void testArithmetic();
 void testFiniteArithmetic();
+void testECArithmetic();
 
 string gen_random(const int len)
 {
@@ -103,21 +104,21 @@ int main()
 		{
 			cout << "Currently, only NIST pre-determined curves are available." << endl
 				<< "Please select one of the below:" << endl;
-			for(int i=0;i<4;i++)
+			for(int i=0;i<6;i++)
 			{
 				cout << "(" << i << ")" << EllipticCurve::names[i] << endl;
 			}
 			cin >> choice;
-		} while(choice > 3);
+		} while(choice > 5);
 
-		unsigned keySize = EllipticCurve::sizes[choice]/BITS_IN_CHUNK;
+		unsigned keySize = (EllipticCurve::sizes[choice]+BITS_IN_CHUNK-1)/BITS_IN_CHUNK;
 
 		mpuint prime(EllipticCurve::bases[choice],keySize);
-		finite_mpuint a(EllipticCurve::coefficients[choice][0],prime,2*keySize),
-					  b(EllipticCurve::coefficients[choice][1],prime,2*keySize),
-					  c(EllipticCurve::coefficients[choice][2],prime,2*keySize),
-					  x(EllipticCurve::points[choice][0],prime,2*keySize),
-					  y(EllipticCurve::points[choice][1],prime,2*keySize);
+		finite_mpuint a(EllipticCurve::coefficients[choice][0],prime,keySize+2),
+					  b(EllipticCurve::coefficients[choice][1],prime,keySize+2),
+					  c(EllipticCurve::coefficients[choice][2],prime,keySize+2),
+					  x(EllipticCurve::points[choice][0],prime,keySize+2),
+					  y(EllipticCurve::points[choice][1],prime,keySize+2);
 		EllipticCurve ec(a,b,c);
 		ECPoint P(ec,x,y);
 		
@@ -127,11 +128,13 @@ int main()
 		
 		ECPoint Q(ec,x,y);
 		Q *= d;
-
-		ECMessage theECMessage(prime,originalMessage.c_str(),(unsigned)originalMessage.size());
 		
-		theECMessage.encryptMessage(P,Q);
-		theECMessage.decryptMessage(d);
+		ECMessage theECMessage(prime,originalMessage.c_str(),(unsigned)originalMessage.size());
+		theECMessage.setPrivateKey(d);
+		theECMessage.setPublicKey(P,Q);
+		
+		theECMessage.encryptMessage();
+		theECMessage.decryptMessage();
 
 		char buff[1501];
 
@@ -155,7 +158,7 @@ int main()
 	}
 }
 
-void benchmarkSpeed()
+void benchmarkSpeed(bool ecc, bool rsa)
 {
 	cout << "Starting Benchmark..." << endl;
 
@@ -177,168 +180,181 @@ void benchmarkSpeed()
 	clock_t rsakey1,rsakey2,rsakey3;
 	clock_t rsaenc11,rsaenc12,rsaenc13,rsaenc21,rsaenc22,rsaenc23,rsaenc31,rsaenc32,rsaenc33;
 	clock_t rsadec1,rsadec2,rsadec3;
-	clock_t eccClocks[4];
+	clock_t eccClocks[6];
 
-	for(int choice=0;choice<4;++choice)
+	if(ecc)
 	{
-		unsigned keySize = EllipticCurve::sizes[choice]/BITS_IN_CHUNK;
 
-		mpuint prime(EllipticCurve::bases[choice],keySize);
-		finite_mpuint a(EllipticCurve::coefficients[choice][0],prime,keySize+2),
-						b(EllipticCurve::coefficients[choice][1],prime,keySize+2),
-						c(EllipticCurve::coefficients[choice][2],prime,keySize+2),
-						x(EllipticCurve::points[choice][0],prime,keySize+2),
-						y(EllipticCurve::points[choice][1],prime,keySize+2);
-		EllipticCurve ec(a,b,c);
-		ECPoint P(ec,x,y);
+		for(int choice=0;choice<6;++choice)
+		{
+			unsigned keySize = EllipticCurve::sizes[choice]/BITS_IN_CHUNK;
 
-		finite_mpuint d(keySize+2,prime);
-		PseudoRandom(d);
-		d %= prime;
+			mpuint prime(EllipticCurve::bases[choice],keySize);
+			finite_mpuint a(EllipticCurve::coefficients[choice][0],prime,keySize+2),
+							b(EllipticCurve::coefficients[choice][1],prime,keySize+2),
+							c(EllipticCurve::coefficients[choice][2],prime,keySize+2),
+							x(EllipticCurve::points[choice][0],prime,keySize+2),
+							y(EllipticCurve::points[choice][1],prime,keySize+2);
+			EllipticCurve ec(a,b,c);
+			ECPoint P(ec,x,y);
+
+			finite_mpuint d(keySize+2,prime);
+			PseudoRandom(d);
+			d %= prime;
 		
-		ECPoint Q(ec,x,y);
+			ECPoint Q(ec,x,y);
 
-		//ECC Multiplication 192 bit
-		//ECC Multiplication 256 bit
-		//ECC Multiplication 384 bit
-		//ECC Multiplication 512 bit
-		eccClocks[choice] = clock();
-		Q *= d;
-		eccClocks[choice] = clock() - eccClocks[choice];
-		cout << "ECC Done." << endl;
+			//ECC Multiplication 192 bit
+			//ECC Multiplication 256 bit
+			//ECC Multiplication 384 bit
+			//ECC Multiplication 512 bit
+			eccClocks[choice] = clock();
+			for(int i=0;i<10;i++)
+			{
+				Q *= d;
+				Q = P;
+			}
+			eccClocks[choice] = clock() - eccClocks[choice];
+			eccClocks[choice] /= 10;
+			cout << "ECC Done." << endl;
+		}
 	}
-
-	//random messages for RSA
-	PseudoRandom(m1);
-	PseudoRandom(m2);
-	m1.value[512/BITS_IN_CHUNK-1] = 0;
-	m2.value[1024/BITS_IN_CHUNK-1] = 0;
-
-	//Key generation RSA 512-bit
-	rsakey1 = clock();
-	GenerateKeys(d1,e1,n1,3,true);
-	GenerateKeys(d2,e2,n2,0xf4,true);
-	GenerateKeys(d3,e3,n3,0,true);
-	rsakey1 = clock() - rsakey1;
-	rsakey1 /= 3;
-
-	//Encrypt RSA 512-bit e=3
-	rsaenc11 = clock();
-	mpuint::Power(m1,e1,n1,enc1);
-	mpuint::Power(m1,e1,n1,enc1);
-	mpuint::Power(m1,e1,n1,enc1);
-	rsaenc11 = clock() - rsaenc11;
-	rsaenc11 /= 3;
 	
-	//Encrypt RSA 512-bit e=f4
-	rsaenc12 = clock();
-	mpuint::Power(m1,e2,n2,enc1);
-	mpuint::Power(m1,e2,n2,enc1);
-	mpuint::Power(m1,e2,n2,enc1);
-	rsaenc12 = clock() - rsaenc12;
-	rsaenc12 /= 3;
+	if(rsa)
+	{
+		//random messages for RSA
+		PseudoRandom(m1);
+		PseudoRandom(m2);
+		m1.value[512/BITS_IN_CHUNK-1] = 0;
+		m2.value[1024/BITS_IN_CHUNK-1] = 0;
 
-	//Encrypt RSA 512-bit arbitrary e
-	rsaenc13 = clock();
-	mpuint::Power(m1,e3,n3,enc1);
-	mpuint::Power(m1,e3,n3,enc1);
-	mpuint::Power(m1,e3,n3,enc1);
-	rsaenc13 = clock() - rsaenc13;
-	rsaenc13 /= 3;
+		//Key generation RSA 512-bit
+		rsakey1 = clock();
+		GenerateKeys(d1,e1,n1,3,true);
+		GenerateKeys(d2,e2,n2,0xf4,true);
+		GenerateKeys(d3,e3,n3,0,true);
+		rsakey1 = clock() - rsakey1;
+		rsakey1 /= 3;
 
-	//Decrypt RSA 512-bit
-	rsadec1 = clock();
-	mpuint::Power(enc1,d1,n1,m1);
-	mpuint::Power(enc1,d2,n2,m1);
-	mpuint::Power(enc1,d3,n3,m1);
-	rsadec1 = clock() - rsadec1;
-	rsadec1 /= 3;
-
-	cout << "RSA 512 Done." << endl;
-
-	//Key generation RSA 1024-bit
-	rsakey2 = clock();
-	GenerateKeys(d4,e4,n4,3,true);
-	GenerateKeys(d5,e5,n5,0xf4,true);
-	GenerateKeys(d6,e6,n6,0,true);
-	rsakey2 = clock() - rsakey2;
-	rsakey2 /= 3;
-
-	//Encrypt RSA 1024-bit e=3
-	rsaenc21 = clock();
-	mpuint::Power(m2,e4,n4,enc2);
-	mpuint::Power(m2,e4,n4,enc2);
-	mpuint::Power(m2,e4,n4,enc2);
-	rsaenc21 = clock() - rsaenc21;
-	rsaenc21 /= 3;
+		//Encrypt RSA 512-bit e=3
+		rsaenc11 = clock();
+		mpuint::Power(m1,e1,n1,enc1);
+		mpuint::Power(m1,e1,n1,enc1);
+		mpuint::Power(m1,e1,n1,enc1);
+		rsaenc11 = clock() - rsaenc11;
+		rsaenc11 /= 3;
 	
-	//Encrypt RSA 1024-bit e=f4
-	rsaenc22 = clock();
-	mpuint::Power(m2,e5,n5,enc2);
-	mpuint::Power(m2,e5,n5,enc2);
-	mpuint::Power(m2,e5,n5,enc2);
-	rsaenc22 = clock() - rsaenc22;
-	rsaenc22 /= 3;
+		//Encrypt RSA 512-bit e=f4
+		rsaenc12 = clock();
+		mpuint::Power(m1,e2,n2,enc1);
+		mpuint::Power(m1,e2,n2,enc1);
+		mpuint::Power(m1,e2,n2,enc1);
+		rsaenc12 = clock() - rsaenc12;
+		rsaenc12 /= 3;
 
-	//Encrypt RSA 1024-bit arbitrary e
-	rsaenc23 = clock();
-	mpuint::Power(m2,e6,n6,enc2);
-	mpuint::Power(m2,e6,n6,enc2);
-	mpuint::Power(m2,e6,n6,enc2);
-	rsaenc23 = clock() - rsaenc23;
-	rsaenc23 /= 3;
+		//Encrypt RSA 512-bit arbitrary e
+		rsaenc13 = clock();
+		mpuint::Power(m1,e3,n3,enc1);
+		mpuint::Power(m1,e3,n3,enc1);
+		mpuint::Power(m1,e3,n3,enc1);
+		rsaenc13 = clock() - rsaenc13;
+		rsaenc13 /= 3;
 
-	//Decrypt RSA 1024-bit
-	rsadec2 = clock();
-	mpuint::Power(enc2,d4,n4,m2);
-	mpuint::Power(enc2,d5,n5,m2);
-	mpuint::Power(enc2,d6,n6,m2);
-	rsadec2 = clock() - rsadec2;
-	rsadec2 /= 3;
+		//Decrypt RSA 512-bit
+		rsadec1 = clock();
+		mpuint::Power(enc1,d1,n1,m1);
+		mpuint::Power(enc1,d2,n2,m1);
+		mpuint::Power(enc1,d3,n3,m1);
+		rsadec1 = clock() - rsadec1;
+		rsadec1 /= 3;
 
-	cout << "RSA 1024 Done." << endl;
+		cout << "RSA 512 Done." << endl;
 
-	//Key generation RSA 2048-bit
-	rsakey3 = clock();
-	GenerateKeys(d7,e7,n7,3,true);
-	GenerateKeys(d8,e8,n8,0xf4,true);
-	GenerateKeys(d9,e9,n9,0,true);
-	rsakey3 = clock() - rsakey3;
-	rsakey3 /= 3;
+		//Key generation RSA 1024-bit
+		rsakey2 = clock();
+		GenerateKeys(d4,e4,n4,3,true);
+		GenerateKeys(d5,e5,n5,0xf4,true);
+		GenerateKeys(d6,e6,n6,0,true);
+		rsakey2 = clock() - rsakey2;
+		rsakey2 /= 3;
 
-	//Encrypt RSA 2048-bit e=3
-	rsaenc31 = clock();
-	mpuint::Power(m3,e7,n7,enc3);
-	mpuint::Power(m3,e7,n7,enc3);
-	mpuint::Power(m3,e7,n7,enc3);
-	rsaenc31 = clock() - rsaenc31;
-	rsaenc31 /= 3;
+		//Encrypt RSA 1024-bit e=3
+		rsaenc21 = clock();
+		mpuint::Power(m2,e4,n4,enc2);
+		mpuint::Power(m2,e4,n4,enc2);
+		mpuint::Power(m2,e4,n4,enc2);
+		rsaenc21 = clock() - rsaenc21;
+		rsaenc21 /= 3;
 	
-	//Encrypt RSA 2048-bit e=f4
-	rsaenc32 = clock();
-	mpuint::Power(m3,e8,n8,enc3);
-	mpuint::Power(m3,e8,n8,enc3);
-	mpuint::Power(m3,e8,n8,enc3);
-	rsaenc32 = clock() - rsaenc32;
-	rsaenc32 /= 3;
+		//Encrypt RSA 1024-bit e=f4
+		rsaenc22 = clock();
+		mpuint::Power(m2,e5,n5,enc2);
+		mpuint::Power(m2,e5,n5,enc2);
+		mpuint::Power(m2,e5,n5,enc2);
+		rsaenc22 = clock() - rsaenc22;
+		rsaenc22 /= 3;
 
-	//Encrypt RSA 2048-bit arbitrary e
-	rsaenc33 = clock();
-	mpuint::Power(m3,e9,n9,enc3);
-	mpuint::Power(m3,e9,n9,enc3);
-	mpuint::Power(m3,e9,n9,enc3);
-	rsaenc33 = clock() - rsaenc33;
-	rsaenc33 /= 3;
+		//Encrypt RSA 1024-bit arbitrary e
+		rsaenc23 = clock();
+		mpuint::Power(m2,e6,n6,enc2);
+		mpuint::Power(m2,e6,n6,enc2);
+		mpuint::Power(m2,e6,n6,enc2);
+		rsaenc23 = clock() - rsaenc23;
+		rsaenc23 /= 3;
 
-	//Decrypt RSA 2048-bit
-	rsadec3 = clock();
-	mpuint::Power(enc3,d7,n7,m3);
-	mpuint::Power(enc3,d8,n8,m3);
-	mpuint::Power(enc3,d9,n9,m3);
-	rsadec3 = clock() - rsadec3;
-	rsadec3 /= 3;
+		//Decrypt RSA 1024-bit
+		rsadec2 = clock();
+		mpuint::Power(enc2,d4,n4,m2);
+		mpuint::Power(enc2,d5,n5,m2);
+		mpuint::Power(enc2,d6,n6,m2);
+		rsadec2 = clock() - rsadec2;
+		rsadec2 /= 3;
 
-	cout << "RSA 2048 Done." << endl;
+		cout << "RSA 1024 Done." << endl;
+
+		//Key generation RSA 2048-bit
+		rsakey3 = clock();
+		GenerateKeys(d7,e7,n7,3,true);
+		GenerateKeys(d8,e8,n8,0xf4,true);
+		GenerateKeys(d9,e9,n9,0,true);
+		rsakey3 = clock() - rsakey3;
+		rsakey3 /= 3;
+
+		//Encrypt RSA 2048-bit e=3
+		rsaenc31 = clock();
+		mpuint::Power(m3,e7,n7,enc3);
+		mpuint::Power(m3,e7,n7,enc3);
+		mpuint::Power(m3,e7,n7,enc3);
+		rsaenc31 = clock() - rsaenc31;
+		rsaenc31 /= 3;
+	
+		//Encrypt RSA 2048-bit e=f4
+		rsaenc32 = clock();
+		mpuint::Power(m3,e8,n8,enc3);
+		mpuint::Power(m3,e8,n8,enc3);
+		mpuint::Power(m3,e8,n8,enc3);
+		rsaenc32 = clock() - rsaenc32;
+		rsaenc32 /= 3;
+
+		//Encrypt RSA 2048-bit arbitrary e
+		rsaenc33 = clock();
+		mpuint::Power(m3,e9,n9,enc3);
+		mpuint::Power(m3,e9,n9,enc3);
+		mpuint::Power(m3,e9,n9,enc3);
+		rsaenc33 = clock() - rsaenc33;
+		rsaenc33 /= 3;
+
+		//Decrypt RSA 2048-bit
+		rsadec3 = clock();
+		mpuint::Power(enc3,d7,n7,m3);
+		mpuint::Power(enc3,d8,n8,m3);
+		mpuint::Power(enc3,d9,n9,m3);
+		rsadec3 = clock() - rsadec3;
+		rsadec3 /= 3;
+
+		cout << "RSA 2048 Done." << endl;
+
+	}
 	
 	cout << "Benchmark results:" << endl << endl;
 	cout << "+---------------+---------------+" << endl;
@@ -359,10 +375,12 @@ void benchmarkSpeed()
 	cout << "|" << setw(15) << "RSA 512 keys" << "|" << setw(15) << rsakey1/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
 	cout << "|" << setw(15) << "RSA 1024 keys" << "|" << setw(15) << rsakey2/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
 	cout << "|" << setw(15) << "RSA 2048 keys" << "|" << setw(15) << rsakey3/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
-	cout << "|" << setw(15) << "ECC 192 mul" << "|" << setw(15) << eccClocks[0]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
-	cout << "|" << setw(15) << "ECC 256 mul" << "|" << setw(15) << eccClocks[1]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
-	cout << "|" << setw(15) << "ECC 384 mul" << "|" << setw(15) << eccClocks[2]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
-	cout << "|" << setw(15) << "ECC 512 mul" << "|" << setw(15) << eccClocks[3]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "ECC 160 mul" << "|" << setw(15) << eccClocks[0]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "ECC 192 mul" << "|" << setw(15) << eccClocks[1]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "ECC 224 mul" << "|" << setw(15) << eccClocks[2]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "ECC 256 mul" << "|" << setw(15) << eccClocks[3]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "ECC 384 mul" << "|" << setw(15) << eccClocks[4]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
+	cout << "|" << setw(15) << "ECC 521 mul" << "|" << setw(15) << eccClocks[5]/((double)CLOCKS_PER_SEC/1000) << "|" << endl;
 	cout << "+---------------+---------------+" << endl << endl;
 }
 
@@ -440,4 +458,63 @@ void testFiniteArithmetic()
 	}
 
 	cout << "Operation took on average " << (double)averageClocks/numTrials << " clock cycles";
+}
+
+void testECArithmetic()
+{
+	for(int choice=0;choice<5;++choice)
+	{
+		unsigned keySize = EllipticCurve::sizes[choice]/BITS_IN_CHUNK;
+
+		mpuint prime(EllipticCurve::bases[choice],keySize);
+		finite_mpuint a(EllipticCurve::coefficients[choice][0],prime,keySize+2),
+						b(EllipticCurve::coefficients[choice][1],prime,keySize+2),
+						c(EllipticCurve::coefficients[choice][2],prime,keySize+2),
+						x(EllipticCurve::points[choice][0],prime,keySize+2),
+						y(EllipticCurve::points[choice][1],prime,keySize+2);
+		EllipticCurve ec(a,b,c);
+		ECPoint P(ec,x,y);
+
+		for(int j=0;j<100;j++)
+		{
+			finite_mpuint d(2*keySize,prime);
+			PseudoRandom(d);
+			d %= prime;
+		
+			ECPoint Q(ec,x,y);
+			Q *= d;
+
+			//encrypt
+
+			finite_mpuint k(2*keySize,prime);
+			PseudoRandom(k);
+			k %= prime;
+		
+			ECPoint C1(*P.ec,P.x,P.y);
+			C1 *= k;
+
+			ECPoint C2(*Q.ec,Q.x,Q.y);
+			C2 *= k;
+
+			finite_mpuint m(2*keySize,prime);
+			PseudoRandom(m);
+			m %= prime;
+
+			finite_mpuint m1(m);
+
+			m1 += C2.x;
+
+			//decrypt
+
+			C1 *= d;
+
+			m1 -= C1.x;
+
+			if(m1 != m)
+			{
+				cout << "WRONG" << endl << m1 << endl << m << endl;
+				return;
+			}
+		}
+	}
 }

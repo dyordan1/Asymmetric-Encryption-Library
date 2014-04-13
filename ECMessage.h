@@ -14,15 +14,36 @@ private:
 	mpuint* base;
 	finite_mpuint* messageData;
 	ECPoint* messagePoints;
-	bool isEncrypted;
+	bool isEncrypted, hasPublic, hasPrivate;
+	ECPoint P,Q;
+	finite_mpuint d;
 public:
     ECMessage(mpuint &base);
     ECMessage(mpuint &base, const void* message, unsigned len);
+	void setPublicKey(const ECPoint &P, const ECPoint &Q)
+	{
+		this->P = P;
+		this->Q = Q;
+		hasPublic = true;
+	}
+	void setPrivateKey(const finite_mpuint &d)
+	{
+		this->d = d;
+		hasPrivate = true;
+	}
 	void embedMessage(const void* message, unsigned len);
 	int extractMessage(void* message, unsigned maxLen);
-	void encryptMessage(const ECPoint &P, const ECPoint &Q);
-	void decryptMessage(const finite_mpuint &d);
+	static unsigned __stdcall encryptPart(void*);
+	static unsigned __stdcall decryptPart(void*);
+	void encryptMessage();
+	void decryptMessage();
     ~ECMessage();
+	struct messagePart
+	{
+		ECMessage* theMessage;
+		unsigned begin;
+		unsigned end;
+	};
 };
 
 //end namespace

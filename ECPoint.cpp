@@ -11,6 +11,18 @@ ECPoint::ECPoint(EllipticCurve &_ec, unsigned len, mpuint &base): ec(&_ec), x(le
 {
 	isInfinite = true;
 }
+
+void ECPoint::operator = (const ECPoint &point)
+{
+	ec = point.ec;
+	isInfinite = point.isInfinite;
+	if(!isInfinite)
+	{
+		x = point.x;
+		y = point.y;
+	}
+}
+
 void ECPoint::operator += (const ECPoint &point)
 {
 	if(point.isInfinite)
@@ -24,6 +36,7 @@ void ECPoint::operator += (const ECPoint &point)
 		isInfinite = false;
 		return;
 	}
+
 	finite_mpuint m(point.y);
 	finite_mpuint temp(x);
 	if(x == point.x)
@@ -75,27 +88,97 @@ void ECPoint::operator -= (const ECPoint &point)
 	copy.y -= point.y;
 	ECPoint::operator+=(copy);
 }
+
+//Sliding window method
 void ECPoint::operator *= (const finite_mpuint &scalar)
 {
-	ECPoint multiple(*this),multipleCopy(*this),temp(*ec,x.length,*(x.base));
-	unsigned i = 0;
-	while (i < scalar.length)
+	//determine window size
+	const int windowSize = BITS_IN_CHUNK/4;
+
+	//create dP for 2^{w-1}...2^{w}-1
+	const CHUNK_DATA_TYPE numPowers = (MAX_CHUNK>>(BITS_IN_CHUNK-windowSize+1))+1;
+	ECPoint* multiples = new ECPoint[numPowers];
+	multiples[0] = *this;
+	CHUNK_DATA_TYPE bit = 1;
+	do
 	{
-		CHUNK_DATA_TYPE bit = 1;
+		multiples[0] +=  multiples[0];
+		bit <<= 1;
+	} while(bit != numPowers);
+
+	int i;
+	for(i=1;i<numPowers;i++)
+	{
+		multiples[i] = multiples[i-1];
+		multiples[i] += *this;
+	}
+	ECPoint temp(*ec,x.length,*(x.base));
+	i = scalar.length-1;
+	while (i >= 0)
+	{
+		CHUNK_DATA_TYPE bit = 1<<(BITS_IN_CHUNK-1);
 		do
 		{
-			if (scalar.value[i] & bit)
+			if(!(scalar.value[i] & bit))
 			{
-				temp += multiple;
+				temp += temp;
 			}
-			bit <<= 1;
-			multipleCopy += multiple;
-			multiple = multipleCopy;
+			else
+			{
+				CHUNK_DATA_TYPE pow = 1;
+				int w = windowSize-1;
+				while(w > 0)
+				{
+					if(bit == 1)
+					{
+						if(i == 0)
+						{
+							ECPoint Q(*ec,x.length,*(x.base));
+							CHUNK_DATA_TYPE bitmaskDoubleAdd = 1<<(windowSize-1);
+							do
+							{
+								Q += Q;
+								if(pow & bitmaskDoubleAdd)
+								{
+									Q += temp;
+								}
+								bitmaskDoubleAdd >>= 1;
+							} while(bitmaskDoubleAdd != 0);
+							temp = Q;
+							x = temp.x;
+							y = temp.y;
+							delete [] multiples;
+							return;
+						}
+						else
+						{
+							--i;
+						}
+					}
+					else
+					{
+						bit >>= 1;
+					}
+					pow <<= 1;
+					if(scalar.value[i] & bit)
+						pow++;
+					w--;
+				}
+				CHUNK_DATA_TYPE bitPow = 1;
+				do
+				{
+					temp +=  temp;
+					bitPow <<= 1;
+				} while(bitPow != windowSize);
+				temp += multiples[pow-numPowers];
+			}
+			bit >>= 1;
 		} while (bit != 0);
-		++i;
+		--i;
 	}
 	x = temp.x;
 	y = temp.y;
+	delete [] multiples;
 }
 
 //end namespace

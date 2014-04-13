@@ -3,30 +3,44 @@
 namespace AsymmEL
 {
 
-char* EllipticCurve::names[4] =
+char* EllipticCurve::names[6] =
 {
+	"secp160r1",
 	"P-192",
+	"secp224r1",
 	"P-256",
 	"P-384",
 	"P-521"
 };
 
-int EllipticCurve::sizes[4] = {192,256,384,521};
+int EllipticCurve::sizes[6] = {160,192,224,256,384,521};
 
-char* EllipticCurve::bases[4] =
+char* EllipticCurve::bases[6] =
 {
+	"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFF",
 	"fffffffffffffffffffffffffffffffeffffffffffffffff",
+	"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000000000000000000001",
 	"ffffffff00000001000000000000000000000000ffffffffffffffffffffffff",
 	"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff",
 	"1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 };
 
-char* EllipticCurve::coefficients[4][3] =
+char* EllipticCurve::coefficients[6][3] =
 {
+	{
+		"1",
+		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFC",
+		"1C97BEFC54BD7A8B65ACF89F81D4D4ADC565FA45"
+	},
 	{
 		"1",
 		"fffffffffffffffffffffffffffffffefffffffffffffffc",
 		"64210519e59c80e70fa7e9ab72243049feb8deecc146b9b1"
+	},
+	{
+		"1",
+		"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFE",
+		"B4050A850C04B3ABF54132565044B0B7D7BFD8BA270B39432355FFB4"
 	},
 	{
 		"1",
@@ -45,11 +59,19 @@ char* EllipticCurve::coefficients[4][3] =
 	}
 };
 
-char* EllipticCurve::points[4][2] =
+char* EllipticCurve::points[6][2] =
 {
+	{
+		"4A96B5688EF573284664698968C38BB913CBFC82",
+		"23A628553168947D59DCC912042351377AC5FB32"
+	},
 	{
 		"188da80eb03090f67cbf20eb43a18800f4ff0afd82ff1012",
 		"07192b95ffc8da78631011ed6b24cdd573f977a11e794811"
+	},
+	{
+		"B70E0CBD6BB4BF7F321390B94A03C1D356C21122343280D6115C1D21",
+		"BD376388B5F723FB4C22DFE6CD4375A05A07476444D5819985007E34"
 	},
 	{
 		"6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296",

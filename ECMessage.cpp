@@ -1,5 +1,7 @@
 #include "ECMessage.h"
 #include "random.h"
+#include <windows.h>
+#include <process.h>
 
 namespace AsymmEL
 {
@@ -142,42 +144,87 @@ int ECMessage::extractMessage(void* message, unsigned maxLen)
 	return pos;
 }
 
-void ECMessage::encryptMessage(const ECPoint &P, const ECPoint &Q)
+unsigned __stdcall ECMessage::encryptPart(void *mes)
 {
-	if(isEncrypted)
-		return;
-	finite_mpuint k(2*base->length,*base);
-	for(unsigned i=0;i<length;++i)
+	messagePart &part = *((messagePart *)mes);
+	ECMessage &message = *part.theMessage;
+	finite_mpuint k(message.base->length+2,*message.base);
+	for(unsigned i=part.begin;i<part.end;++i)
 	{
 		PseudoRandom(k);
-		k %= *base;
+		k %= *message.base;
 		
-		messagePoints[i].ec = P.ec;
-		messagePoints[i].x.setBase(*base);
-		messagePoints[i].x = P.x;
-		messagePoints[i].y.setBase(*base);
-		messagePoints[i].y = P.y;
-		messagePoints[i].isInfinite = false;
-		messagePoints[i] *= k;
+		message.messagePoints[i].ec = message.P.ec;
+		message.messagePoints[i].x.setBase(*message.base);
+		message.messagePoints[i].x = message.P.x;
+		message.messagePoints[i].y.setBase(*message.base);
+		message.messagePoints[i].y = message.P.y;
+		message.messagePoints[i].isInfinite = false;
+		message.messagePoints[i] *= k;
 
-		ECPoint C2(*Q.ec,Q.x,Q.y);
+		ECPoint C2(*message.Q.ec,message.Q.x,message.Q.y);
 		C2 *= k;
 
-		messageData[i] += C2.x;
+		message.messageData[i] += C2.x;
 	}
+	return 0;
+}
+
+unsigned __stdcall ECMessage::decryptPart(void *mes)
+{
+	messagePart &part = *((messagePart *)mes);
+	ECMessage &message = *part.theMessage;
+	for(unsigned i=part.begin;i<part.end;++i)
+	{
+		message.messagePoints[i] *= message.d;
+		message.messageData[i] -= message.messagePoints[i].x;
+	}
+	return 0;
+}
+
+void ECMessage::encryptMessage()
+{
+	if(length == 0 || isEncrypted || !hasPublic)
+		return;
+	int numThreads = length;
+	if(numThreads > MAX_THREADS)
+		numThreads = MAX_THREADS;
+    unsigned threadID;
+	HANDLE* threads = new HANDLE[numThreads];
+	messagePart* parts = new messagePart[numThreads];
+	for(int i=0;i<numThreads;i++)
+	{
+		parts[i].theMessage = this;
+		parts[i].begin = (length*i)/numThreads;
+		parts[i].end = (length*(i+1))/numThreads;
+		threads[i] = (HANDLE)_beginthreadex( NULL, 0, ECMessage::encryptPart, &parts[i], 0, &threadID );
+	}
+	WaitForMultipleObjects(numThreads,threads,true,INFINITE);
+	delete[] threads;
+	delete[] parts;
 	isEncrypted = true;
 }
 
-void ECMessage::decryptMessage(const finite_mpuint &d)
+void ECMessage::decryptMessage()
 {
-	if(!isEncrypted)
+	if(!isEncrypted || !hasPrivate)
 		return;
-	for(unsigned i=0;i<length;++i)
+	int numThreads = length;
+	if(numThreads > MAX_THREADS)
+		numThreads = MAX_THREADS;
+    unsigned threadID;
+	HANDLE* threads = new HANDLE[numThreads];
+	messagePart* parts = new messagePart[numThreads];
+	for(int i=0;i<numThreads;i++)
 	{
-		messagePoints[i] *= d;
-
-		messageData[i] -= messagePoints[i].x;
+		parts[i].theMessage = this;
+		parts[i].begin = (length*i)/numThreads;
+		parts[i].end = (length*(i+1))/numThreads;
+		threads[i] = (HANDLE)_beginthreadex( NULL, 0, ECMessage::decryptPart, &parts[i], 0, &threadID );
 	}
+	WaitForMultipleObjects(numThreads,threads,true,INFINITE);
+	delete[] threads;
+	delete[] parts;
 	isEncrypted = false;
 }
 
