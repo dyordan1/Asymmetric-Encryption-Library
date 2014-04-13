@@ -149,7 +149,12 @@ void GenerateKeys(mpuint &d, mpuint &e, mpuint &n, CHUNK_DATA_TYPE customE, bool
 			Random(d);
 		while (true)
 		{
-			EuclideanAlgorithm(d, pq, e, temp, g);
+			if(EuclideanAlgorithm(d, pq, e, temp, g))
+			{
+				mpuint temp(pq);
+				temp -= e;
+				e = temp;
+			}
 			if (g == 1)
 				break;
 			d += 1;
@@ -157,7 +162,12 @@ void GenerateKeys(mpuint &d, mpuint &e, mpuint &n, CHUNK_DATA_TYPE customE, bool
 	}
 	else
 	{
-		EuclideanAlgorithm(e, pq, d, temp, g);
+		if(EuclideanAlgorithm(e, pq, d, temp, g))
+		{
+			mpuint temp(pq);
+			temp -= d;
+			d = temp;
+		}
 	}
 }
 

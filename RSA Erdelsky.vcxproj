@@ -168,6 +168,7 @@
     <ClInclude Include="EllipticCurve.h" />
     <ClInclude Include="euclid.h" />
     <ClInclude Include="finite_mpuint.h" />
+    <ClInclude Include="mpint.h" />
     <ClInclude Include="Message.h" />
     <ClInclude Include="mpuint.h" />
     <ClInclude Include="random.h" />

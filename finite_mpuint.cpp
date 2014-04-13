@@ -90,7 +90,12 @@ void finite_mpuint::operator *= (CHUNK_DATA_TYPE n)
 }
 void finite_mpuint::operator /= (const mpuint &n)
 {
-	EuclideanAlgorithm(n,*base,a,b,g);
+	if(EuclideanAlgorithm(n,*base,a,b,g))
+	{
+		mpuint temp(*base);
+		temp -= a;
+		a = temp;
+	}
 	mpuint dbl(length*2);
 	dbl = *this;
 	dbl *= a;
@@ -101,7 +106,12 @@ void finite_mpuint::operator /= (CHUNK_DATA_TYPE n)
 {
 	mpuint num(base->length);
 	num = n;
-	EuclideanAlgorithm(num,*base,a,b,g);
+	if(EuclideanAlgorithm(num,*base,a,b,g))
+	{
+		mpuint temp(*base);
+		temp -= a;
+		a = temp;
+	}
 	mpuint dbl(length*2);
 	dbl = *this;
 	dbl *= a;
